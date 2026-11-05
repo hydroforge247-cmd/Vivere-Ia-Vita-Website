@@ -1569,12 +1569,15 @@ still.src=img(STOPS[0].id); settle(); updateStart(); preloadAll();
       rg.addColorStop(0,`rgba(${col},1)`); rg.addColorStop(.35,`rgba(${col},.85)`); rg.addColorStop(1,`rgba(${col},0)`); q.fillStyle=rg; q.fillRect(0,0,32,32); return s; };
     const PAL=[[245,232,201],[217,191,138],[196,141,82],[150,100,52],[112,72,36],[246,210,141]].map(p=>p.join(','));
     const SPR=PAL.map(sprite), GOLD=sprite('255,226,160'), WHITE=sprite('255,248,232');
-    const data=g.getImageData(0,0,c.width,c.height).data, P=[], STEP=4.2, rowL={}, rowR={};
+    const data=g.getImageData(0,0,c.width,c.height).data, P=[], STEP=1.7, rowL={}, rowR={};
+    // small crisp round grains in the scroll's real colours (cached per colour)
+    const GR={}, grain=(r,g2,b)=>{ const key=r+','+g2+','+b; if(GR[key]) return GR[key]; const s=document.createElement('canvas'); s.width=s.height=8; const q=s.getContext('2d'), rg=q.createRadialGradient(4,4,0,4,4,4);
+      rg.addColorStop(0,`rgba(${key},1)`); rg.addColorStop(.55,`rgba(${key},.95)`); rg.addColorStop(1,`rgba(${key},0)`); q.fillStyle=rg; q.fillRect(0,0,8,8); return GR[key]=s; }, qz=v=>Math.min(255,Math.round(v/20)*20);
     for(let y=0;y<h;y+=STEP) for(let x=0;x<w;x+=STEP){ const i=((y*k|0)*c.width+(x*k|0))*4; if(data[i+3]<40) continue;
       const ry=Math.round(y/4)*4; rowL[ry]=Math.min(rowL[ry]??1e9,x); rowR[ry]=Math.max(rowR[ry]??-1,x);
-      const best=[0,1,5][Math.random()*3|0];   // cream, parchment or gold — never the dark wood browns
+      const glow=Math.random()<.06, best=[0,1,5][Math.random()*3|0];
       const delay=((x/w)+.15+wave(y))/1.3*SWEEP;
-      P.push({x:X0+x,y:Y0+y,s:SPR[best],d:delay+Math.random()*.12,a:-1.4+(Math.random()-.5)*2.2,sp:.25+Math.random()*1.1,turn:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8),sz:4+Math.random()*5,life:1.4+Math.random()*.9}); }
+      P.push({x:X0+x+(Math.random()-.5)*STEP,y:Y0+y+(Math.random()-.5)*STEP,glow,s:glow?SPR[best]:grain(qz(data[i]),qz(data[i+1]),qz(data[i+2])),d:delay+Math.random()*.12,a:-1.4+(Math.random()-.5)*2.2,sp:.25+Math.random()*1.1,turn:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8),sz:glow?3.5+Math.random()*4:.9+Math.random()*.9,life:1.4+Math.random()*.9}); }
     el.style.visibility='hidden';
     const layer=document.createElement('canvas'); layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6';
     gift.appendChild(layer); layer.width=innerWidth*k; layer.height=innerHeight*k; const lc=layer.getContext('2d'); lc.setTransform(k,0,0,k,0,0);
@@ -1593,13 +1596,18 @@ still.src=img(STOPS[0].id); settle(); updateStart(); preloadAll();
         let prev=null; for(let y=0;y<=h;y+=4){ const fx=front(y,t), ok=y>=yTop && y<=yBot && fx>=xL && fx<=xR;
           if(ok&&prev){ lc.beginPath(); lc.moveTo(X0+prev[0],Y0+prev[1]); lc.lineTo(X0+fx,Y0+y); lc.stroke(); } prev=ok?[fx,y]:null; } lc.restore(); }
       // the dust, curling away in soft spirals
-      let alive=0; lc.globalCompositeOperation='lighter';
+      // pass 1: the fine grains keep the scroll's own colours, then catch the light and glow out
+      let alive=0; const late=[];
       for(const p of P){ const age=t-p.d; if(age<=0){ alive++; continue; } if(age>p.life) continue; alive++;
         const f=age/p.life, e=1-(1-f)*(1-f);
-        p.a+=p.turn*.016*(1-f); const v=p.sp*(1+age*1.6);
+        p.a+=p.turn*.016*(1-f); const v=p.sp*(1+age*1.4);
         p.x+=Math.cos(p.a)*v+.35; p.y+=Math.sin(p.a)*v-.25;
-        const sz=p.sz*(1-e*.4), al=.34*Math.pow(1-f,1.4)*Math.min(1,age*5);
-        lc.globalAlpha=al; lc.drawImage(age<.25?p.s:(age<.7?GOLD:WHITE),p.x-sz,p.y-sz,sz*2,sz*2); }
+        if(p.glow || age>.55){ late.push(p,age,f,e); continue; }
+        const sz=p.sz*(1-e*.3); lc.globalAlpha=Math.pow(1-f,1.1); lc.drawImage(p.s,p.x-sz,p.y-sz,sz*2,sz*2); }
+      lc.globalCompositeOperation='lighter';
+      for(let n=0;n<late.length;n+=4){ const p=late[n], age=late[n+1], f=late[n+2], e=late[n+3];
+        const sz=p.glow?p.sz*(1-e*.4):p.sz*1.15, al=(p.glow?.34:.7)*Math.pow(1-f,1.4)*Math.min(1,age*5);
+        lc.globalAlpha=al; lc.drawImage(p.glow?(age<.25?p.s:(age<.7?GOLD:WHITE)):(age<.9?GOLD:WHITE),p.x-sz,p.y-sz,sz*2,sz*2); }
       lc.globalAlpha=1; lc.globalCompositeOperation='source-over';
       if(alive && t<SWEEP+3) requestAnimationFrame(tick); else { layer.remove(); onDone&&onDone(); } })(T0);
   }
