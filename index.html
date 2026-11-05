@@ -1587,9 +1587,10 @@ still.src=img(STOPS[0].id); settle(); updateStart(); preloadAll();
       bc.save(); bc.shadowColor='#000'; bc.shadowBlur=14; bc.shadowOffsetX=5000*k; bc.shadowBlur=14*k; bc.beginPath(); bc.moveTo(-5000-40,-20);
       for(let y=-20;y<=h+20;y+=4) bc.lineTo(-5000+Math.max(-40,front(y,t)),y); bc.lineTo(-5000-40,h+20); bc.closePath(); bc.fill(); bc.restore();
       lc.drawImage(buf,X0,Y0,w,h);
-      // the glowing edge
+      // the glowing edge: one unbroken curve from the top rod to the bottom rod
+      const ys=Object.keys(rowL).map(Number), yTop=Math.min(...ys)+4, yBot=Math.max(...ys)-4, xL=Math.min(...Object.values(rowL))+10, xR=Math.max(...Object.values(rowR))-10;
       if(t<SWEEP+.2){ lc.save(); lc.globalCompositeOperation='lighter'; lc.lineWidth=3; lc.strokeStyle='rgba(255,214,140,.55)'; lc.shadowColor='#ffd38a'; lc.shadowBlur=14;
-        let prev=null; for(let y=0;y<=h;y+=4){ const fx=front(y,t), ok=rowL[y]!==undefined && fx>=rowL[y] && fx<=rowR[y];
+        let prev=null; for(let y=0;y<=h;y+=4){ const fx=front(y,t), ok=y>=yTop && y<=yBot && fx>=xL && fx<=xR;
           if(ok&&prev){ lc.beginPath(); lc.moveTo(X0+prev[0],Y0+prev[1]); lc.lineTo(X0+fx,Y0+y); lc.stroke(); } prev=ok?[fx,y]:null; } lc.restore(); }
       // the dust, curling away in soft spirals
       let alive=0; lc.globalCompositeOperation='lighter';
