@@ -135,12 +135,27 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @keyframes breathe{50%{box-shadow:0 0 0 12px rgba(29,20,6,.06)}}
 .start .txt b{display:block;font-size:18px;font-weight:800}
 #intro .start .txt small{display:block;font-size:12.5px;font-weight:600;opacity:.78;margin-top:1px;letter-spacing:0;text-transform:none;color:var(--amber-ink)}
-.start.loading{background:linear-gradient(90deg,#f2b45a var(--pct,0%),#5a4426 var(--pct,0%));transition:background .4s}
+.start.loading{background:#4a3a24}
+.start.loading::before{content:"";position:absolute;inset:0;width:var(--pct,0%);transition:width .5s ease;border-radius:inherit;
+  background:repeating-linear-gradient(-45deg,rgba(255,255,255,.28) 0 12px,transparent 12px 24px),linear-gradient(135deg,#ffd38f,#f2b45a 55%,#e39a3b);background-size:34px 34px,100% 100%;animation:stripes .8s linear infinite}
+@keyframes stripes{to{background-position:34px 0,0 0}}
+.start>*{position:relative;z-index:1}
+#loadPop{position:relative;margin:0 0 12px;padding:12px 14px;border-radius:16px;display:flex;align-items:center;gap:12px;transition:opacity .6s,transform .6s}
+#loadPop.gone{opacity:0;transform:translateY(8px);pointer-events:none}
+#loadPop .spin{flex:none;width:26px;height:26px;border-radius:50%;border:3px solid rgba(242,180,90,.25);border-top-color:var(--amber);animation:spin .9s linear infinite}
+#loadPop.ok .spin{animation:none;border-color:var(--ok);display:grid;place-items:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadPop b{display:block;font-size:14px}#intro #loadPop small{display:block;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0;text-transform:none}
+#loadPop .bar{height:5px;border-radius:3px;margin-top:6px;background:rgba(255,255,255,.12);overflow:hidden}
+#loadPop .bar i{display:block;height:100%;width:0;border-radius:3px;transition:width .5s;background:repeating-linear-gradient(-45deg,#ffd38f 0 6px,#e39a3b 6px 12px);background-size:17px 17px;animation:stripes2 .6s linear infinite}
+@keyframes stripes2{to{background-position:17px 0}}
 .start.loading .ring svg{opacity:.35}
 .start.loading::after{animation:none}
 .start .arr{margin-left:auto;font-size:22px;font-weight:800}
 .knowit{margin-top:16px;padding:14px;border-radius:18px;display:flex;align-items:center;gap:12px;text-align:left;width:100%}
 .knowit b{display:block;font-size:15px}.knowit span{font-size:12.5px;color:var(--muted)}
+.knowit.camp{margin-top:8px;text-decoration:none;color:var(--ink)}
+.knowit .go.wa{background:#25d366;color:#05210f}
 .knowit .go{margin-left:auto;flex:none;padding:10px 14px;border-radius:12px;background:var(--amber);color:var(--amber-ink);font-weight:800;font-size:13px}
 
 /* details sheet */
@@ -320,6 +335,21 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 #doorway p{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:var(--display);font-style:italic;font-size:28px;color:#f6e4c4;opacity:0;transition:opacity .35s;text-shadow:0 2px 20px rgba(0,0,0,.8)}
 #doorway.shut p{opacity:1}#doorway.swing p{opacity:0}
 #cam.enter{transition:transform 1.4s cubic-bezier(.6,0,.35,1),filter 1.4s}
+ #warp{position:fixed;inset:0;width:100%;height:100%;z-index:38;pointer-events:none;display:none}
+#warp.on{display:block}
+#flash{position:fixed;inset:0;z-index:39;pointer-events:none;opacity:0;transition:opacity .8s ease;background:radial-gradient(circle at 50% 45%,#fffaf0,#ffe9c2 45%,#f2c37a)}
+#flash.on{opacity:1;transition:opacity .4s ease-in}
+#walkin.kb img{animation:kb 9s ease-out forwards}
+@keyframes kb{from{transform:scale(1.12)}to{transform:scale(1.0)}}
+#arrive{position:fixed;inset:0;z-index:37;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 20px calc(env(safe-area-inset-bottom) + 24px);opacity:0;pointer-events:none;transition:opacity .9s ease .3s;
+  background:linear-gradient(to bottom,rgba(0,0,0,.35),transparent 25%,transparent 50%,rgba(6,12,11,.92))}
+#arrive:not(.on){transition:opacity .3s ease}
+#arrive.on{opacity:1;pointer-events:auto}
+#arClose{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px}
+#arrive .arTxt small{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--amber);font-weight:800}
+#arrive h3{font-family:var(--display);font-weight:400;font-size:38px;line-height:1.05;margin:6px 0 4px;text-wrap:balance;text-shadow:0 4px 24px rgba(0,0,0,.5)}
+#arrive p{color:#d9ded6;font-size:14px;margin-bottom:18px}
+#arrive .start .txt small{display:block;font-size:12.5px;font-weight:600;opacity:.78;letter-spacing:0;text-transform:none;color:var(--amber-ink)}
 #walkin{position:fixed;inset:0;z-index:36;display:none;overflow:hidden;pointer-events:none;background:transparent}
 #walkin.on{display:block}
 #walkin img{width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.32);filter:blur(10px) brightness(1.25);transition:opacity .7s ease,transform 1.3s cubic-bezier(.15,.7,.25,1),filter 1.1s ease}
@@ -679,8 +709,10 @@ function build(){
    <h2>Vivere <i>La Vita</i></h2>
    <p>Walk the farm the way our guests do: past the dam, along the river, and right up to the door of every chalet and tent. Step inside every one at your own pace.</p>
    <div class="facts"><span class="pill">9 places to stay</span><span class="pill">Own fishing spots</span><span class="pill">Off-grid &amp; peaceful</span></div>
+   <div id="loadPop" class="glass"><span class="spin"></span><div style="flex:1"><b id="lpT">Your walk is loading…</b><small id="lpS">Preparing the full-HD walk so it plays smoothly</small><div class="bar"><i id="lpB"></i></div></div></div>
    <button class="start" id="startWalk"><span class="ring" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span><span class="txt"><b>Start exploring</b><small>Walk the farm and step inside every chalet</small></span><span class="arr" aria-hidden="true">→</span></button>
-   <button class="knowit glass" data-book><div><b>Already know what you want?</b><span>Check dates and book in a minute</span></div><span class="go">Book now</span></button>
+   <button class="knowit glass" data-book><div><b>Already know what you want?</b><span>Book your chalet or tent in a minute</span></div><span class="go">Book now</span></button>
+   <a class="knowit glass camp" href="https://wa.me/27825508119?text=Hello%20Vivere%20La%20Vita%21%20I%27d%20like%20to%20book%20a%20camping%20spot.%0A%0AI%27m%20bringing%3A%20own%20tent%20/%20caravan%20/%20bush%20wagon%20%28please%20choose%29%0AHow%20many%20tents%20or%20caravans%3A%20%0AArrival%20date%3A%20%0ADeparture%20date%3A%20%0AAdults%20%2811%20and%20older%29%3A%20%0AChildren%204-10%3A%20%0AChildren%20under%204%3A%20%0A%0AThank%20you%21" target="_blank" rel="noopener"><div><b>Camping or bringing a caravan?</b><span>Book your own tent or caravan spot on WhatsApp</span></div><span class="go wa">WhatsApp</span></a>
   </section>
  </div>
 </div>
@@ -704,6 +736,9 @@ function build(){
 </div>
 
 <div id="walkin" aria-hidden="true"><img alt=""></div>
+<canvas id="warp" aria-hidden="true"></canvas><div id="flash" aria-hidden="true"></div>
+<div id="arrive" role="dialog" aria-label="You have arrived inside"><button class="gbtn glass" id="arClose" aria-label="Step back outside"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+ <div class="arTxt"><small>You’ve arrived</small><h3 id="arTitle"></h3><p id="arSub"></p><button class="start" id="lookBtn"><span class="ring" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/></svg></span><span class="txt"><b>Have a look around</b><small>Step through every room</small></span><span class="arr" aria-hidden="true">→</span></button></div></div>
 
 <!-- booking -->
 <div class="layer" id="book" role="dialog" aria-modal="true" aria-label="Book your stay">
@@ -730,8 +765,11 @@ const PRE={urls:{},done:0,total:0,bytes:0,ready:false};
 function updateStart(){
   const btn=document.getElementById('startWalk'); if(!btn) return; const sm=btn.querySelector('small'), pct=Math.round(PRE.done/Math.max(1,PRE.total)*100);
   btn.style.setProperty('--pct',pct+'%');
-  if(PRE.ready){ btn.classList.remove('loading'); sm.textContent='Walk the farm and step inside every chalet'; }
-  else { btn.classList.add('loading'); sm.textContent=`Preparing your tour in full HD… ${pct}%`; }
+  const lp=document.getElementById('loadPop'); if(lp){ document.getElementById('lpB').style.width=pct+'%'; }
+  if(PRE.ready){ btn.classList.remove('loading'); sm.textContent='Walk the farm and step inside every chalet';
+    if(lp && !lp.classList.contains('ok')){ lp.classList.add('ok'); lp.querySelector('.spin').textContent='✓'; document.getElementById('lpT').textContent='Your walk is ready';
+      document.getElementById('lpS').textContent='Tap Start exploring'; setTimeout(()=>lp.classList.add('gone'),2200); setTimeout(()=>lp.remove(),2900); } }
+  else { btn.classList.add('loading'); sm.textContent=`Loading your walk… ${pct}%`; if(lp) document.getElementById('lpS').textContent=`Preparing the full-HD walk so it plays smoothly · ${pct}%`; }
 }
 async function preloadAll(){
   const walks=[...new Set(STOPS.filter(s=>s.walk).map(s=>s.walk))]; PRE.total=walks.length+1;
@@ -767,7 +805,6 @@ const STOPS=[
  {id:'pixie',name:'Pixie Chalet',walk:'w3',markers:[{x:.52,y:.22,u:'pixie'}]},
  {id:'boathouse',name:'The Boathouse',walk:'w4',markers:[{x:.55,y:.26,u:'boathouse'}]},
  {id:'river',name:'The river',walk:'w5'},
- {id:'camping',name:'Riverside camping',walk:'w6',markers:[{x:.55,y:.4,u:'camping'}]},
  {id:'visvanger',name:'Visvanger Tent',walk:'w7',markers:[{x:.45,y:.27,u:'visvanger'}]},
  {id:'pietmyvrou',name:'Piet-my-vrou Tent',walk:'w8',markers:[{x:.6,y:.17,u:'pietmyvrou'}]},
  {id:'hadida',name:'Hadida Tent',walk:'w9',markers:[{x:.56,y:.35,u:'hadida'}]},
@@ -995,7 +1032,7 @@ function openInfo(key,byTour){
    <div class="hero"><img src="${hero}" alt="${u.name}"><span class="pill price badge">from ${u.from}${u.phoneOnly?'':' / night'}</span></div>
    <h2>${u.name}</h2>
    <div class="meta"><span class="pill">${u.kind}</span><span class="pill">${u.sleeps}</span></div>
-   ${u.gal?`<button class="btn primary inside" id="inside">CLICK TO GO INSIDE <span aria-hidden="true">→</span></button>`:''}
+   ${u.gal?`<button class="btn primary inside" id="inside">TRAVEL INSIDE <span aria-hidden="true">✦</span></button>`:''}
    ${u.phoneOnly?`<div class="row"><a class="btn primary" href="${WA}">WhatsApp to reserve</a><a class="btn secondary" href="tel:0825508119">Call</a></div><p class="small">Camping is reserved by phone or WhatsApp: ${PHONE}</p>`:''}
    <p class="lead">${u.text}</p>
    <ul class="feats">${u.feats.map(f=>`<li>${f}</li>`).join('')}</ul>
@@ -1118,7 +1155,7 @@ function place(pos,live){
   const cards=$$('.card'), w=cards[0].offsetWidth||300, R=w*1.15, STEP=34;
   cards.forEach((c,i)=>{ const d=i-pos, a=Math.abs(d);
     c.style.transition=live?'none':'';
-    c.style.transform=`translate(-50%,-50%) translateZ(${-R}px) rotateY(${d*STEP}deg) translateZ(${R}px) scale(${1-Math.min(a,1)*.06})`;
+    c.style.transform=`translate(-50%,-50%) translateZ(${-R}px) rotateY(${d*STEP}deg) translateZ(${R-Math.min(a,1)*w*.5}px) scale(${1-Math.min(a,1)*.08})`;
     c.style.opacity=a>2.2?0:a<1?1-a*.62:Math.max(0,.38-(a-1)*.32);
     c.style.filter=`brightness(${1-Math.min(a,1)*.5}) saturate(${1-Math.min(a,1)*.3})`; c.style.zIndex=100-Math.round(a*10); });
   // the little dial underneath turns with it
@@ -1151,27 +1188,43 @@ function goInside(key){
   const u=UNITS[key]; if(reduce){ openGallery(key); return; }
   closeSheet(); busy=true;
   const st=stage.getBoundingClientRect(), pin=$(`.marker[data-u="${key}"] .pin`);
-  let ox=50, oy=45;
-  if(pin){ const r=pin.getBoundingClientRect(); ox=(r.left+r.width/2-st.left)/st.width*100; oy=(r.top+r.height/2-st.top)/st.height*100+8; }
+  let px=st.left+st.width/2, py=st.top+st.height*.45;
+  if(pin){ const r=pin.getBoundingClientRect(); px=r.left+r.width/2; py=r.top+r.height/2+40; }
   stage.classList.remove('show');
-  // 1. walk up to the door
-  cam.style.transformOrigin=`${ox}% ${oy}%`; cam.classList.add('enter');
-  requestAnimationFrame(()=>{ cam.style.transform='scale(3.4)'; cam.style.filter='brightness(1.15) blur(3px)'; });
-  // 2. step through: the room fades up around you, already moving
+  cam.style.transformOrigin=`${(px-st.left)/st.width*100}% ${(py-st.top)/st.height*100}%`; cam.classList.add('enter');
+  requestAnimationFrame(()=>{ cam.style.transform='scale(4.2)'; cam.style.filter='brightness(1.7) blur(6px)'; });
+  warp(px,py,1700);
+  const fl=$('#flash'); setTimeout(()=>fl.classList.add('on'),1150);
   const wi=$('#walkin'), wimg=wi.querySelector('img'); wimg.src=U(u.gal+'/'+GAL[u.gal][0]+'.jpg');
-  wi.style.cssText=''; wi.className='on';
-  setTimeout(()=>wi.classList.add('in'),650);
-  // 3. the room settles into the photo frame of the gallery
-  setTimeout(()=>{ $('#gal').classList.add('quiet'); openGallery(key); place(0,true);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ place(0,true);
-      const c=$$('.card')[0]; if(!c){ return; } const r=c.getBoundingClientRect();
-      wi.classList.add('dock'); Object.assign(wi.style,{top:r.top+'px',left:r.left+'px',width:r.width+'px',height:r.height+'px'});
-      $('#gal').classList.add('show'); })); },1650);
-  setTimeout(()=>{ wi.className=''; wi.style.cssText=''; $('#gal').classList.remove('quiet','show');
+  setTimeout(()=>{ wi.style.cssText=''; wi.className='on in kb';
+    $('#arTitle').textContent='Welcome to '+u.name; $('#arSub').textContent=u.kind+' · '+u.sleeps; $('#arrive').classList.add('on');
+    fl.classList.remove('on');
     cam.classList.remove('enter'); cam.style.transition='none'; cam.style.transform=''; cam.style.filter=''; cam.style.transformOrigin='';
-    requestAnimationFrame(()=>{ cam.style.transition=''; }); stage.classList.add('show'); busy=false; },2600);
+    requestAnimationFrame(()=>{ cam.style.transition=''; }); stage.classList.add('show'); busy=false; ARR=key; },1600);
+}
+let ARR=null;
+function lookAround(){ const key=ARR; if(!key) return; ARR=null; const wi=$('#walkin'); $('#arrive').classList.remove('on'); wi.classList.remove('kb');
+  $('#gal').classList.add('quiet'); openGallery(key); place(0,true);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ place(0,true); const c=$$('.card')[0]; if(!c) return; const r=c.getBoundingClientRect();
+    wi.classList.add('dock'); Object.assign(wi.style,{top:r.top+'px',left:r.left+'px',width:r.width+'px',height:r.height+'px'}); $('#gal').classList.add('show'); }));
+  setTimeout(()=>{ wi.className=''; wi.style.cssText=''; $('#gal').classList.remove('quiet','show'); },950); }
+function leaveArrival(){ ARR=null; $('#arrive').classList.remove('on'); const wi=$('#walkin'); wi.style.transition='opacity .6s'; wi.style.opacity='0'; setTimeout(()=>{ wi.className=''; wi.style.cssText=''; },650); }
+// streaks of light rushing past as you travel through the door
+function warp(cx,cy,dur){
+  const c=$('#warp'), g=c.getContext('2d'), k=Math.min(devicePixelRatio||1,2); c.width=innerWidth*k; c.height=innerHeight*k; g.setTransform(k,0,0,k,0,0); c.classList.add('on');
+  const S=[...Array(260)].map(()=>({a:Math.random()*6.283,r:Math.random()*40,v:.5+Math.random()*1.5,w:.6+Math.random()*1.8,h:Math.random()<.7?'255,236,196':'255,255,255'}));
+  const t0=performance.now();
+  (function f(now){ const t=(now-t0)/dur; g.clearRect(0,0,innerWidth,innerHeight); if(t>1){ c.classList.remove('on'); return; }
+    const acc=1+t*t*28, glow=g.createRadialGradient(cx,cy,0,cx,cy,60+t*500); glow.addColorStop(0,`rgba(255,240,205,${.25+t*.6})`); glow.addColorStop(1,'rgba(255,230,180,0)');
+    g.globalCompositeOperation='source-over'; g.fillStyle=glow; g.fillRect(0,0,innerWidth,innerHeight); g.globalCompositeOperation='lighter';
+    for(const p of S){ const r0=p.r, r1=p.r+p.v*acc*6; p.r+=p.v*acc*3;
+      if(p.r>Math.hypot(innerWidth,innerHeight)){ p.r=Math.random()*30; }
+      g.strokeStyle=`rgba(${p.h},${Math.min(1,.15+t*1.1)*(1-Math.max(0,t-.85)*6)})`; g.lineWidth=p.w; g.beginPath();
+      g.moveTo(cx+Math.cos(p.a)*r0,cy+Math.sin(p.a)*r0); g.lineTo(cx+Math.cos(p.a)*r1,cy+Math.sin(p.a)*r1); g.stroke(); }
+    requestAnimationFrame(f); })(t0);
 }
 const userGal=f=>()=>{ if(guided) stopTour(); f(); };
+$('#lookBtn').onclick=lookAround; $('#arClose').onclick=leaveArrival;
 $('#gnext').onclick=userGal(()=>step(1)); $('#gprev').onclick=userGal(()=>step(-1));
 $('#gclose').onclick=userGal(closeGallery); $('#gstop').onclick=stopTour;
 $('#gbook').onclick=()=>{ const k=G.unit; $('#gclose').click(); openBooking(k); };
