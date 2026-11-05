@@ -135,6 +135,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @keyframes breathe{50%{box-shadow:0 0 0 12px rgba(29,20,6,.06)}}
 .start .txt b{display:block;font-size:18px;font-weight:800}
 #intro .start .txt small{display:block;font-size:12.5px;font-weight:600;opacity:.78;margin-top:1px;letter-spacing:0;text-transform:none;color:var(--amber-ink)}
+.start.loading{background:linear-gradient(90deg,#f2b45a var(--pct,0%),#5a4426 var(--pct,0%));transition:background .4s}
+.start.loading .ring svg{opacity:.35}
+.start.loading::after{animation:none}
 .start .arr{margin-left:auto;font-size:22px;font-weight:800}
 .knowit{margin-top:16px;padding:14px;border-radius:18px;display:flex;align-items:center;gap:12px;text-align:left;width:100%}
 .knowit b{display:block;font-size:15px}.knowit span{font-size:12.5px;color:var(--muted)}
@@ -721,7 +724,32 @@ function build(){
 const U = p => (window.MEDIA_GET ? MEDIA_GET(p) : 'media/' + p);
 // Full 1080p on good connections; 720p data-saver on slow or metered ones.
 const NET=navigator.connection||{}; let HD=!(NET.saveData||(NET.effectiveType&&['slow-2g','2g','3g'].includes(NET.effectiveType)));
-const CLIP=w=>window.MEDIA_GET?U(w+'.mp4'):`web/${HD?'hd':'sd'}/${w}.mp4`;
+const CLIP=w=>window.MEDIA_GET?U(w+'.mp4'):(PRE.urls[w]||`web/${HD?'hd':'sd'}/${w}.mp4`);
+// ---- preload the whole walk up front so nothing ever stalls once you're exploring ----
+const PRE={urls:{},done:0,total:0,bytes:0,ready:false};
+function updateStart(){
+  const btn=document.getElementById('startWalk'); if(!btn) return; const sm=btn.querySelector('small'), pct=Math.round(PRE.done/Math.max(1,PRE.total)*100);
+  btn.style.setProperty('--pct',pct+'%');
+  if(PRE.ready){ btn.classList.remove('loading'); sm.textContent='Walk the farm and step inside every chalet'; }
+  else { btn.classList.add('loading'); sm.textContent=`Preparing your tour in full HD… ${pct}%`; }
+}
+async function preloadAll(){
+  const walks=[...new Set(STOPS.filter(s=>s.walk).map(s=>s.walk))]; PRE.total=walks.length+1;
+  // all the stop stills first (small), then every walking clip in route order
+  await Promise.all(STOPS.map(s=>new Promise(r=>{ const im=new Image(); im.onload=im.onerror=r; im.src=img(s.id); })));
+  PRE.done++; updateStart();
+  for(const w of walks){
+    const tier=HD?'hd':'sd', t0=performance.now();
+    try{ const r=await fetch(`web/${tier}/${w}.mp4`); const b=await r.blob(); PRE.urls[w]=URL.createObjectURL(b);
+      const mbps=b.size*8/Math.max(.05,(performance.now()-t0)/1000)/1e6; if(HD && mbps<7) HD=false; }   // slow line: lighter version for the rest
+    catch(e){}
+    PRE.done++; updateStart();
+  }
+  PRE.ready=true; updateStart(); if(PRE.wantStart && $('#intro')) begin(false);
+  // then quietly warm up the inside photos
+  Object.keys(GAL).forEach((k,i)=>setTimeout(()=>GAL[k].slice(0,4).forEach(f=>{ const im=new Image(); im.src=U(k+'/'+f+'.jpg'); }),i*400));
+}
+
 document.addEventListener('DOMContentLoaded',()=>{ const v=document.getElementById('vid'); let t=null;
   v.addEventListener('waiting',()=>{ clearTimeout(t); t=setTimeout(()=>{ if(HD){ HD=false; } },1500); }); v.addEventListener('playing',()=>clearTimeout(t)); });
 const PHONE='082 550 8119', WA='https://wa.me/27825508119';
@@ -1069,7 +1097,9 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) Music.sto
 $('#intro').style.backgroundImage=`linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.1) 38%,rgba(8,16,15,.96) 78%),url(${U('intro.jpg')})`;
 function begin(withGuide){ if(musicWanted){ Music.start(); setTimeout(()=>toast('♪ Soft music is playing. Tap ♪ to mute.'),1200); } const el=$('#intro'); if(!el) return; el.classList.add('gone');
   setTimeout(()=>{ el.remove(); if(withGuide){ setGuided(true); nextGuided(); } },650); }
-$('#startWalk').onclick=()=>begin(false);
+$('#startWalk').onclick=()=>{ if(PRE.ready) return begin(false);
+  if(PRE.wantStart) return; PRE.wantStart=true; toast('Getting the full-HD walk ready. It starts by itself in a moment.');
+  setTimeout(()=>{ if(!PRE.ready && $('#intro')) begin(false); },45000); };
 
 // ---------------- gallery ----------------
 let G=null, gi=0;
@@ -1411,7 +1441,7 @@ function aRates(){
 
 wireBookButtons(); wireAdminButtons();
 addEventListener('resize',()=>{ renderMarkers(); if(G) layout(); });
-still.src=img(STOPS[0].id); settle();
+still.src=img(STOPS[0].id); settle(); updateStart(); preloadAll();
 
 // ===== BIRTHDAY-FEATURE START =====
 (function(){
