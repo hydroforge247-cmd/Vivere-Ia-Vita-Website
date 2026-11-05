@@ -6,7 +6,7 @@
 <title>Vivere La Vita Farm Tour</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Pinyon+Script&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --river:#0d1a18; --ink:#f4f0e7; --muted:#b6c0b6; --glass:rgba(13,26,24,.6); --line:rgba(244,240,231,.16);
@@ -103,6 +103,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
 #intro{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;justify-content:flex-end;padding:24px 22px calc(env(safe-area-inset-bottom) + 22px);background:center/cover no-repeat;transition:opacity .8s, transform .8s}
+#intro .tint{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 30%,rgba(0,0,0,0) 30%,rgba(8,6,4,.45) 100%),linear-gradient(180deg,rgba(24,17,9,.22),rgba(14,10,6,.3));
+  backdrop-filter:sepia(.2) saturate(.86) contrast(1.07) brightness(.88);-webkit-backdrop-filter:sepia(.2) saturate(.86) contrast(1.07) brightness(.88)}
+#intro .tint::after{content:"";position:absolute;inset:0;opacity:.09;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#intro>*{z-index:1}
+#intro>small,#intro>h2,#intro>p,#intro>.facts,#intro>.knowit{position:relative}
 #intro.gone{opacity:0;transform:scale(1.06);pointer-events:none}
 #intro .admin-link{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:14px}
 #intro small{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--amber);font-weight:800}
@@ -270,11 +277,15 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 @media (min-aspect-ratio:1/1){.card{width:auto;height:min(64vh,620px)}}
 .card img{width:100%;height:100%;object-fit:cover;transform:scale(1.1);transition:transform 7s ease-out}
 .card.cur img{transform:scale(1.0)}
+.card.pop img{animation:pop .7s cubic-bezier(.2,.9,.25,1.15)}
+@keyframes pop{0%{transform:scale(.93);opacity:.45;filter:blur(3px)}60%{transform:scale(1.025);opacity:1;filter:none}100%{transform:scale(1)}}
 .card figcaption{position:absolute;left:0;right:0;bottom:0;padding:34px 16px 14px;font-size:15px;font-weight:800;background:linear-gradient(transparent,rgba(0,0,0,.78))}
-#thumbs{position:relative;display:flex;gap:6px;overflow-x:auto;padding:6px 16px;scrollbar-width:none}
+#thumbs{position:relative;height:84px;overflow:hidden;margin:0 0 2px}
 #thumbs::-webkit-scrollbar{display:none}
-#thumbs button{flex:none;width:46px;height:46px;border-radius:10px;overflow:hidden;opacity:.45;border:2px solid transparent;transition:.3s}
-#thumbs button.cur{opacity:1;border-color:var(--amber)}
+#thumbs button{position:absolute;left:50%;top:14px;width:48px;height:48px;margin-left:-24px;border-radius:50%;overflow:hidden;border:2px solid rgba(244,240,231,.25);transition:transform .65s cubic-bezier(.22,.8,.24,1),opacity .65s,border-color .3s;will-change:transform}
+#thumbs.live button{transition:border-color .3s}
+#thumbs::before{content:"";position:absolute;left:50%;top:6px;width:64px;height:64px;margin-left:-32px;border-radius:50%;border:1px solid rgba(242,180,90,.35);box-shadow:0 0 30px rgba(242,180,90,.18)}
+#thumbs button.cur{border-color:var(--amber)}
 #thumbs img{width:100%;height:100%;object-fit:cover}
 #gfoot{padding:6px 16px calc(env(safe-area-inset-bottom) + 14px);display:flex;align-items:center;gap:10px}
 #gfoot .btn{flex:1;min-height:48px;font-size:14px}
@@ -285,13 +296,147 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 #stairs.run b{animation:rise 1.5s ease}
 @keyframes fadeio{0%,100%{opacity:0}30%,70%{opacity:1}}
 @keyframes rise{from{transform:translateY(70px)}to{transform:translateY(-70px)}}
+.marker{transform-origin:50% 100%}
+#doorway{position:fixed;inset:0;z-index:36;pointer-events:none;perspective:1400px;display:none}
+#doorway.on{display:block}
+#doorway .leaf{position:absolute;top:0;bottom:0;width:50.5%;transition:transform .55s cubic-bezier(.6,0,.3,1),opacity .4s;
+  background:linear-gradient(90deg,rgba(255,220,160,.06),transparent 30%),repeating-linear-gradient(90deg,#24170d 0 38px,#2a1b10 38px 40px,#20140b 40px 78px),#22160c;box-shadow:inset 0 0 120px rgba(0,0,0,.75)}
+#doorway .leaf.l{left:0;transform-origin:0 50%;transform:translateX(-101%)}
+#doorway .leaf.r{right:0;transform-origin:100% 50%;transform:translateX(101%)}
+#doorway .leaf.l::after,#doorway .leaf.r::after{content:"";position:absolute;top:50%;width:10px;height:56px;margin-top:-28px;border-radius:6px;background:linear-gradient(#f6d08f,#b8843e);box-shadow:0 2px 8px rgba(0,0,0,.6)}
+#doorway .leaf.l::after{right:22px}#doorway .leaf.r::after{left:22px}
+#doorway.shut .leaf{transform:none}
+#doorway.swing .leaf{transition:transform 1.05s cubic-bezier(.55,.05,.25,1),opacity 1.05s}
+#doorway.swing .leaf.l{transform:rotateY(-96deg);opacity:.0}
+#doorway.swing .leaf.r{transform:rotateY(96deg);opacity:.0}
+#doorway .glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(255,226,170,.55),rgba(255,226,170,0) 55%);opacity:0;transition:opacity .9s}
+#doorway.swing .glow{opacity:1;transition:opacity .35s}
+#doorway.done .glow{opacity:0;transition:opacity 1s}
+#doorway p{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-family:var(--display);font-style:italic;font-size:28px;color:#f6e4c4;opacity:0;transition:opacity .35s;text-shadow:0 2px 20px rgba(0,0,0,.8)}
+#doorway.shut p{opacity:1}#doorway.swing p{opacity:0}
+#cam.enter{transition:transform 1.15s cubic-bezier(.55,0,.2,1),filter 1.15s}
 #ring.climb{animation:climb 1.5s ease}
 @keyframes climb{40%{transform:translateY(-20%) rotateX(-16deg);filter:blur(7px)}41%{transform:translateY(20%) rotateX(16deg);filter:blur(7px)}100%{transform:none;filter:none}}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01s!important}}
+
+/* ===== BIRTHDAY-FEATURE START (remove this block, the HTML block and the JS block to take the gift away) ===== */
+#gift{position:fixed;inset:0;z-index:200;overflow:hidden;background:#0b0806;font-family:var(--body);touch-action:none}
+#gift.bye{transition:opacity 1.2s ease,transform 1.2s ease;opacity:0;transform:scale(1.05);pointer-events:none}
+.gp{position:absolute;top:0;bottom:0;width:50%;transition:transform 1.4s cubic-bezier(.6,0,.25,1),opacity 1.4s;
+  background-color:#123b2f;
+  background-image:radial-gradient(circle at 25% 25%,rgba(242,197,120,.55) 0 2.2px,transparent 2.8px),radial-gradient(circle at 75% 75%,rgba(242,197,120,.35) 0 1.4px,transparent 2px),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 2px,transparent 2px 22px),repeating-linear-gradient(-45deg,rgba(0,0,0,.08) 0 2px,transparent 2px 22px),
+    radial-gradient(ellipse at 50% 40%,rgba(255,255,255,.08),rgba(0,0,0,.35));
+  background-size:44px 44px,44px 44px,auto,auto,100vw 100%;box-shadow:inset 0 0 140px rgba(0,0,0,.55)}
+.gp.l{left:0;transform-origin:0 50%}
+.gp.r{right:0;background-position:-50vw 0,-50vw 0,0 0,0 0,-50vw 0;transform-origin:100% 50%}
+.rb{position:absolute;background:linear-gradient(90deg,#9c6a22,#f3d08a 22%,#fff1c9 40%,#e2b25f 60%,#a5732a);box-shadow:0 0 18px rgba(0,0,0,.45);transition:transform .8s cubic-bezier(.6,0,.3,1),opacity .8s}
+.rb.v{top:0;bottom:0;left:50%;width:46px;margin-left:-23px}
+.rb.h{left:0;right:0;top:46%;height:46px;margin-top:-23px;background:linear-gradient(180deg,#9c6a22,#f3d08a 22%,#fff1c9 40%,#e2b25f 60%,#a5732a)}
+#bow{position:absolute;left:50%;top:46%;width:210px;height:136px;margin:-90px 0 0 -105px;cursor:grab;touch-action:none;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
+#bow.drag{transition:none;cursor:grabbing}
+#bow.gone{transition:transform .9s cubic-bezier(.5,0,.8,.3),opacity .9s;opacity:0}
+#bow.wiggle{animation:wig 2.4s ease-in-out infinite}
+@keyframes wig{0%,70%,100%{transform:none}76%{transform:rotate(-6deg) scale(1.04)}82%{transform:rotate(5deg) scale(1.04)}88%{transform:rotate(-3deg)}}
+#pull{position:absolute;left:50%;top:46%;margin-top:70px;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:rgba(10,8,6,.62);border:1px solid rgba(242,197,120,.45);color:#f6e4c4;
+  font-size:13px;font-weight:700;white-space:nowrap;opacity:0;transition:opacity .8s;pointer-events:none}
+#gift.ready #pull{opacity:1}
+#gift.open #pull{opacity:0}
+#gift .dim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(10,8,6,.45),rgba(10,8,6,.8));transition:opacity 1.2s;pointer-events:none}
+#gift.ready .dim{opacity:0}
+#gift.open{background:transparent;transition:background .6s .5s}
+#gift.open .rb.h{transform:scaleX(0);opacity:0}
+#gift.open .rb.v{transform:scaleY(0);opacity:0;transition-delay:.15s}
+#gift.open .gp.l{transform:translateX(-102%) rotateY(18deg);transition-delay:.45s}
+#gift.open .gp.r{transform:translateX(102%) rotateY(-18deg);transition-delay:.45s}
+#gift canvas{position:absolute;inset:0;pointer-events:none;z-index:5}
+#scroll{position:absolute;left:50%;top:50%;width:min(86vw,440px);transform:translate(-50%,-50%);z-index:4;transition:opacity 1.4s,transform 1.6s,filter 1.4s}
+#scroll.poof{opacity:0;transform:translate(-50%,-60%) scale(.7);filter:blur(6px) brightness(1.8)}
+#scroll.enter{animation:scrollin 1.2s cubic-bezier(.2,.9,.3,1)}
+@keyframes scrollin{from{opacity:0;transform:translate(-50%,-30%) scale(.85)}}
+.rod{position:relative;height:30px;margin:0 -18px;border-radius:15px;z-index:2;background:linear-gradient(180deg,#3a2210,#8a5a2e 35%,#c48d52 50%,#6e4320 70%,#2d1a0c);box-shadow:0 8px 18px rgba(0,0,0,.55)}
+.rod::before,.rod::after{content:"";position:absolute;top:-5px;width:22px;height:40px;border-radius:9px;background:radial-gradient(circle at 40% 35%,#f6d28d,#a77234 60%,#5a3814)}
+.rod::before{left:-12px}.rod::after{right:-12px}
+.paper{position:relative;height:56px;overflow:hidden;margin:-6px 0;transition:height 1.7s cubic-bezier(.5,0,.2,1);
+  background:radial-gradient(ellipse at 50% 50%,#f7ecd2 40%,#ecd9ae 80%,#d9bf8a),#f3e6c8;box-shadow:inset 0 10px 18px rgba(80,50,20,.35),inset 0 -10px 18px rgba(80,50,20,.35),inset 0 0 50px rgba(120,80,30,.35)}
+#gift.unroll .paper{height:min(70vh,640px)}
+#gift.rollup .paper{height:0!important;transition:height 1s cubic-bezier(.6,0,.3,1)}
+.paper .in{height:100%;overflow:auto;overscroll-behavior:contain;padding:28px 24px 30px;color:#3d2a14;text-align:left;scrollbar-width:thin;opacity:0;transition:opacity .8s .9s;touch-action:pan-y}
+#gift.unroll .paper .in{opacity:1}
+.paper h2{font-family:"Pinyon Script",var(--display);font-weight:400;font-size:44px;line-height:1.05;color:#6b4214;text-align:center}
+.paper .orn{color:#a67a3a;letter-spacing:.4em;font-size:13px;margin:8px 0 16px;text-align:center}
+.paper .lead{font-family:"DM Serif Display",Georgia,serif;font-size:21px;text-align:center;color:#5a3712;margin-bottom:16px}
+.paper p{font-family:Georgia,"DM Serif Display",serif;font-size:16.5px;line-height:1.7;margin:0 0 14px}
+.paper .sign{font-family:"Pinyon Script",var(--display);font-size:30px;color:#6b4214;margin:6px 0 2px;line-height:1.1}
+.paper .who{font-family:Georgia,serif;font-style:italic;color:#6b4214;margin-bottom:20px}
+.ps{display:block;width:100%;margin:6px 0 4px;padding:16px 18px;border-radius:16px;border:0;cursor:pointer;text-align:center;color:#fbf3e1;font-family:Georgia,serif;font-size:16px;line-height:1.5;
+  background:linear-gradient(135deg,#1c4a3b,#123b2f);box-shadow:0 10px 24px rgba(18,59,47,.45),inset 0 0 0 1px rgba(242,197,120,.55);animation:psglow 2.4s ease-in-out infinite}
+.ps b{color:#f3d08a}
+@keyframes psglow{50%{box-shadow:0 10px 34px rgba(242,197,120,.45),inset 0 0 0 1px rgba(242,197,120,.8)}}
+.hintdown{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a67a3a;margin-top:6px;text-align:center;animation:bob 1.6s ease-in-out infinite;transition:opacity .4s}
+@keyframes bob{50%{transform:translateY(4px)}}
+#seal{position:absolute;left:50%;top:50%;width:132px;height:132px;margin:-66px 0 0 -66px;z-index:3;border:0;padding:0;background:none;cursor:pointer;animation:sealpulse 2.6s ease-in-out infinite}
+@keyframes sealpulse{50%{transform:scale(1.05)}}
+#seal svg{width:100%;height:100%;filter:drop-shadow(0 8px 14px rgba(60,0,0,.55))}
+#seal .half{position:absolute;inset:0;transition:transform 1s cubic-bezier(.5,0,.8,.4),opacity 1s}
+#seal .half.a{clip-path:polygon(0 0,58% 0,44% 38%,56% 62%,40% 100%,0 100%)}
+#seal .half.b{clip-path:polygon(58% 0,100% 0,100% 100%,40% 100%,56% 62%,44% 38%)}
+#seal.broken{animation:none;pointer-events:none}
+#seal.broken .half.a{transform:translate(-60px,70vh) rotate(-40deg);opacity:0}
+#seal.broken .half.b{transform:translate(70px,70vh) rotate(50deg);opacity:0}
+#tapseal{position:absolute;left:50%;top:50%;margin-top:92px;transform:translateX(-50%);z-index:3;color:#f6e4c4;font-size:13px;font-weight:700;letter-spacing:.08em;white-space:nowrap;text-shadow:0 2px 10px rgba(0,0,0,.8);transition:opacity .4s}
+#gift.unroll #tapseal{opacity:0}
+@media (prefers-reduced-motion:reduce){#gift *{transition-duration:.01s!important;animation:none!important}}
+/* ===== BIRTHDAY-FEATURE END ===== */
 </style>
 </head>
 <body>
+<!-- ===== BIRTHDAY-FEATURE START ===== -->
+<div id="gift" role="dialog" aria-modal="true" aria-label="A birthday present">
+ <div class="gp l"></div><div class="gp r"></div>
+ <div class="rb v"></div><div class="rb h"></div>
+ <svg id="bow" viewBox="0 0 200 130" aria-label="Pull the bow to open your present" role="button"><defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c9"/><stop offset=".45" stop-color="#e9bd6b"/><stop offset="1" stop-color="#94621f"/></linearGradient></defs>
+  <path d="M100 70 C70 20 18 18 22 52 C25 80 70 82 100 70Z" fill="url(#bg1)"/><path d="M100 70 C130 20 182 18 178 52 C175 80 130 82 100 70Z" fill="url(#bg1)"/>
+  <path d="M100 70 C60 50 40 46 44 54 C50 66 80 74 100 70Z" fill="rgba(90,55,15,.35)"/><path d="M100 70 C140 50 160 46 156 54 C150 66 120 74 100 70Z" fill="rgba(90,55,15,.35)"/>
+  <path d="M94 74 L70 128 L84 120 L92 130 L100 80Z" fill="url(#bg1)"/><path d="M106 74 L130 128 L116 120 L108 130 L100 80Z" fill="url(#bg1)"/>
+  <ellipse cx="100" cy="70" rx="16" ry="13" fill="url(#bg1)" stroke="rgba(90,55,15,.4)" stroke-width="2"/></svg>
+ <div id="pull">✦ Trek aan die strik om oop te maak</div>
+ <div class="dim"></div>
+ <canvas id="confetti"></canvas>
+ <div id="scroll" class="enter">
+  <div class="rod"></div>
+  <div class="paper"><div class="in" id="scrollText">
+   <h2>My liefste Moeder,</h2>
+   <div class="orn">✦ ✦ ✦</div>
+   <p class="lead">Baie geluk met Mamma se verjaardag!</p>
+   <p>Ek dank ons Pappa Vader dat Hy Mamma nog vir soveel jare vir ons gespaar het. Ek kon nie vir ’n beter ma gevra het nie.</p>
+   <p>Alhoewel hierdie nie ’n boompie is wat geld laat groei nie, het ek baie gedagtes, liefde en tyd in hierdie projek ingesit. En al is dit dalk nie iets waarna Mamma noodwendig uitgesien het nie, hoop ek dat dit ten minste Mamma se lewe in die toekoms ’n klein bietjie makliker kan maak.</p>
+   <p>Ek bid dat ons Pappa Vader Mamma nog vir baie jare sal seën, en dat gesondheid, liefde en vrede Mamma nooit sal verlaat nie, met elke jaar wat Mamma ouer en wyser word.</p>
+   <p>Met dit alles gesê, hoop ek Mamma geniet hierdie geskenkie, en ek hoop Mamma het nie té veel klagtes daaroor nie. ❤️</p>
+   <div class="sign">Met baie liefde,</div>
+   <div class="who">Mamma se seun.</div>
+   <button class="ps" id="openPresent">P.S. <b>Druk hier</b> om Mamma se geskenk oop te maak. 🎁❤️</button>
+   <div class="hintdown" id="scrollHint">Blaai af ↓</div>
+  </div></div>
+  <div class="rod"></div>
+  <button id="seal" aria-label="Break the seal"><span class="half a"><svg viewBox="0 0 132 132"><defs><radialGradient id="wx" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#d23b33"/><stop offset=".55" stop-color="#9c1c1a"/><stop offset="1" stop-color="#5e0b0c"/></radialGradient>
+   <path id="arcT" d="M20 70 A46 46 0 0 1 112 70"/><path id="arcB" d="M24 66 A42 42 0 0 0 108 66"/></defs>
+   <path d="M66 4 C80 2 92 10 102 12 C114 16 118 28 124 38 C130 50 128 62 129 72 C130 86 122 96 116 106 C108 118 96 122 84 127 C72 131 60 129 48 126 C34 122 24 114 16 104 C8 94 4 82 3 68 C2 54 8 42 14 32 C22 20 32 12 44 8 C52 5 58 5 66 4Z" fill="url(#wx)"/>
+   <circle cx="66" cy="66" r="46" fill="none" stroke="rgba(255,190,170,.35)" stroke-width="2"/><circle cx="66" cy="66" r="50" fill="none" stroke="rgba(60,0,0,.35)" stroke-width="3"/>
+   <text font-family="Georgia,serif" font-size="10.5" letter-spacing="1.4" fill="#f7cdb8" font-weight="bold"><textPath href="#arcT" startOffset="50%" text-anchor="middle">HAPPY BIRTHDAY</textPath></text>
+   <text x="66" y="86" text-anchor="middle" font-family="Pinyon Script,Georgia,serif" font-size="34" fill="#ffd9c6">Mom</text>
+   <text x="66" y="104" text-anchor="middle" font-size="12" fill="#f7cdb8">❦</text></svg></span><span class="half b"><svg viewBox="0 0 132 132"><defs><radialGradient id="wx2" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#d23b33"/><stop offset=".55" stop-color="#9c1c1a"/><stop offset="1" stop-color="#5e0b0c"/></radialGradient>
+   <path id="arcT2" d="M20 70 A46 46 0 0 1 112 70"/><path id="arcB" d="M24 66 A42 42 0 0 0 108 66"/></defs>
+   <path d="M66 4 C80 2 92 10 102 12 C114 16 118 28 124 38 C130 50 128 62 129 72 C130 86 122 96 116 106 C108 118 96 122 84 127 C72 131 60 129 48 126 C34 122 24 114 16 104 C8 94 4 82 3 68 C2 54 8 42 14 32 C22 20 32 12 44 8 C52 5 58 5 66 4Z" fill="url(#wx2)"/>
+   <circle cx="66" cy="66" r="46" fill="none" stroke="rgba(255,190,170,.35)" stroke-width="2"/><circle cx="66" cy="66" r="50" fill="none" stroke="rgba(60,0,0,.35)" stroke-width="3"/>
+   <text font-family="Georgia,serif" font-size="10.5" letter-spacing="1.4" fill="#f7cdb8" font-weight="bold"><textPath href="#arcT2" startOffset="50%" text-anchor="middle">HAPPY BIRTHDAY</textPath></text>
+   <text x="66" y="86" text-anchor="middle" font-family="Pinyon Script,Georgia,serif" font-size="34" fill="#ffd9c6">Mom</text>
+   <text x="66" y="104" text-anchor="middle" font-size="12" fill="#f7cdb8">❦</text></svg></span></button>
+  <div id="tapseal">Tik op die seël</div>
+ </div>
+</div>
+<!-- ===== BIRTHDAY-FEATURE END ===== -->
 <div id="backdrop"></div>
 <div id="app">
  <div id="stage">
@@ -327,6 +472,7 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
   <section class="sheet" id="info" role="dialog" aria-modal="true" aria-label="Accommodation details"></section>
 
   <section id="intro">
+   <div class="tint" aria-hidden="true"></div>
    <button class="chip glass admin-link" data-admin>Admin</button>
    <small>Riverside farm stay</small>
    <h2>Vivere <i>La Vita</i></h2>
@@ -355,6 +501,8 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
  </div>
  <div id="stairs"><b id="stairsText"></b></div>
 </div>
+
+<div id="doorway" aria-hidden="true"><div class="leaf l"></div><div class="leaf r"></div><div class="glow"></div><p id="doorText"></p></div>
 
 <!-- booking -->
 <div class="layer" id="book" role="dialog" aria-modal="true" aria-label="Book your stay">
@@ -521,7 +669,7 @@ function renderMarkers(){
     b.style.left=Math.min(Math.max(r.ox+m.x*1080*r.s,100),stage.clientWidth-100)+'px';
     b.style.top=(r.oy+m.y*1920*r.s)+'px';
     b.innerHTML=`<span class="label glass"><em>${u.kind}${seen.has(m.u)?' · seen':''}</em><b>${u.name}</b><i>from ${u.from}${u.phoneOnly?'':' / night'}</i><span class="go">${u.phoneOnly?'See camping details':'Tap to go inside'} →</span></span><span class="stem"></span><span class="pin"></span>`;
-    b.setAttribute('aria-label',(u.phoneOnly?'Open ':'Go inside ')+u.name); b.onclick=()=>openInfo(m.u); box.appendChild(b);
+    b.dataset.u=m.u; b.setAttribute('aria-label',(u.phoneOnly?'Open ':'Go inside ')+u.name); b.onclick=()=>openInfo(m.u); box.appendChild(b);
     // keep the whole marker clear of the top bar and the walking controls
     const st=stage.getBoundingClientRect(), topEdge=$('#top').getBoundingClientRect().bottom-st.top+12;
     const navTop=($('#nav').getBoundingClientRect().top||st.bottom)-st.top-110, h=b.offsetHeight, w=b.offsetWidth;
@@ -624,7 +772,7 @@ function openInfo(key,byTour){
    </details>
    ${u.phoneOnly?'':`<div class="row"><button class="btn secondary" id="bookBtn">Check dates &amp; book</button><a class="btn secondary" href="${WA}">WhatsApp</a></div>`}`;
   s.querySelector('.x').onclick=()=>{ if(guided) stopTour(); closeSheet(); };
-  if(u.gal) $('#inside').onclick=()=>openGallery(key);
+  if(u.gal) $('#inside').onclick=()=>goInside(key);
   const bb=$('#bookBtn'); if(bb) bb.onclick=()=>openBooking(key);
   s.scrollTop=0; s.classList.add('open');
   if(guided&&!byTour) setGuided(false);
@@ -727,22 +875,31 @@ function openGallery(key){
   $('#ring').innerHTML=G.files.map((f,i)=>`<figure class="card" data-i="${i}"><img ${i<3?'':'loading="lazy"'} src="${U(G.key+'/'+f+'.jpg')}" alt="${capOf(f)}"><figcaption>${capOf(f)}</figcaption></figure>`).join('');
   $('#thumbs').innerHTML=G.files.map((f,i)=>`<button data-i="${i}" aria-label="Photo ${i+1}: ${capOf(f)}"><img loading="lazy" src="${U(G.key+'/'+f+'.jpg')}" alt=""></button>`).join('');
   $$('#thumbs button').forEach(b=>b.onclick=userGal(()=>step(+b.dataset.i-gi)));
-  $('#gal').classList.add('open'); requestAnimationFrame(layout);
+  lastGi=-1; $('#gal').classList.add('open'); requestAnimationFrame(layout);
 }
+// photos sit on a slowly turning wheel; the one in front is bright, neighbours fade away round the rim
 function place(pos,live){
-  const cards=$$('.card'), w=cards[0].offsetWidth||300;
-  cards.forEach((c,i)=>{ const d=i-pos, a=Math.abs(d), sgn=Math.sign(d), ea=Math.min(a,2);
+  const cards=$$('.card'), w=cards[0].offsetWidth||300, R=w*1.15, STEP=34;
+  cards.forEach((c,i)=>{ const d=i-pos, a=Math.abs(d);
     c.style.transition=live?'none':'';
-    c.style.transform=`translate(-50%,-50%) translateX(${d*w*.64}px) translateZ(${-ea*140-Math.max(0,a-2)*60}px) rotateY(${-sgn*Math.min(a,1.6)*24}deg) scale(${1-Math.min(a,2)*.04})`;
-    c.style.opacity=a>2.6?0:Math.max(0,1-a*.38); c.style.filter=`brightness(${1-Math.min(a,1)*.45})`; c.style.zIndex=100-Math.round(a*10); });
+    c.style.transform=`translate(-50%,-50%) translateZ(${-R}px) rotateY(${d*STEP}deg) translateZ(${R}px) scale(${1-Math.min(a,1)*.06})`;
+    c.style.opacity=a>2.2?0:a<1?1-a*.62:Math.max(0,.38-(a-1)*.32);
+    c.style.filter=`brightness(${1-Math.min(a,1)*.5}) saturate(${1-Math.min(a,1)*.3})`; c.style.zIndex=100-Math.round(a*10); });
+  // the little dial underneath turns with it
+  const th=$('#thumbs'); th.classList.toggle('live',!!live);
+  $$('#thumbs button').forEach((b,i)=>{ const d=i-pos, a=Math.abs(d), x=d*54, Rd=230, y=Rd-Math.sqrt(Math.max(0,Rd*Rd-x*x));
+    b.style.transform=`translate(${x}px,${y}px) rotate(${d*8}deg) scale(${a<.5?1.12:1-Math.min(a,4)*.07})`;
+    b.style.opacity=a>4.5?0:1-a*.2; b.style.zIndex=100-Math.round(a*10); });
 }
+let lastGi=-1;
 function layout(){
   const cards=$$('.card'); place(gi,false);
   cards.forEach((c,i)=>c.classList.toggle('cur',i===gi));
   const fl=floorOf(G.files[gi]); $('#floor').textContent=fl; $('#floor').style.display=fl?'inline-block':'none';
   $('#count').textContent=`${gi+1} / ${G.files.length}`;
   $$('#thumbs button').forEach((b,i)=>b.classList.toggle('cur',i===gi));
-  const t=$('#thumbs .cur'), th=$('#thumbs'); if(t) th.scrollTo({left:t.offsetLeft-(th.clientWidth-t.offsetWidth)/2,behavior:reduce?'auto':'smooth'});
+  if(lastGi!==gi && !reduce){ const c=cards[gi]; if(c){ c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); } }
+  lastGi=gi;
 }
 function step(n){
   if(!G) return; const to=Math.max(0,Math.min(G.files.length-1,gi+n)); if(to===gi) return;
@@ -754,6 +911,25 @@ function step(n){
   } else layout();
 }
 function closeGallery(){ $('#gal').classList.remove('open'); G=null; }
+function goInside(key){
+  const u=UNITS[key]; if(reduce){ openGallery(key); return; }
+  closeSheet(); busy=true;
+  const st=stage.getBoundingClientRect(), pin=$(`.marker[data-u="${key}"] .pin`);
+  let ox=50, oy=45;
+  if(pin){ const r=pin.getBoundingClientRect(); ox=(r.left+r.width/2-st.left)/st.width*100; oy=(r.top+r.height/2-st.top)/st.height*100+6; }
+  stage.classList.remove('show');
+  cam.style.transformOrigin=`${ox}% ${oy}%`; cam.classList.add('enter');
+  requestAnimationFrame(()=>{ cam.style.transform='scale(2.7)'; cam.style.filter='brightness(.5)'; });
+  const dw=$('#doorway'); $('#doorText').textContent='Welcome to '+u.name;
+  dw.className='on';
+  setTimeout(()=>{ dw.classList.add('shut'); },620);                          // the doors close around you as you reach them
+  setTimeout(()=>{ openGallery(key);                                          // ...then swing open into the room
+    requestAnimationFrame(()=>{ dw.classList.add('swing'); }); },1500);
+  setTimeout(()=>{ dw.classList.add('done');
+    cam.classList.remove('enter'); cam.style.transition='none'; cam.style.transform=''; cam.style.filter=''; cam.style.transformOrigin='';
+    requestAnimationFrame(()=>{ cam.style.transition=''; }); stage.classList.add('show'); busy=false; },2600);
+  setTimeout(()=>{ dw.className=''; },3500);
+}
 const userGal=f=>()=>{ if(guided) stopTour(); f(); };
 $('#gnext').onclick=userGal(()=>step(1)); $('#gprev').onclick=userGal(()=>step(-1));
 $('#gclose').onclick=userGal(closeGallery); $('#gstop').onclick=stopTour;
@@ -1025,6 +1201,56 @@ function aRates(){
 wireBookButtons(); wireAdminButtons();
 addEventListener('resize',()=>{ renderMarkers(); if(G) layout(); });
 still.src=img(STOPS[0].id); settle();
+
+// ===== BIRTHDAY-FEATURE START =====
+(function(){
+  const gift=document.getElementById('gift'); if(!gift) return;
+  const $g=id=>document.getElementById(id), cv=$g('confetti'), cx=cv.getContext('2d');
+  let parts=[], running=false;
+  function size(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+  function loop(){ running=true; cx.clearRect(0,0,innerWidth,innerHeight);
+    parts=parts.filter(p=>p.life>0);
+    parts.forEach(p=>{ p.vy+=p.g; p.vx*=.985; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; p.life-=p.decay; cx.save(); cx.globalAlpha=Math.max(0,Math.min(1,p.life));
+      cx.translate(p.x,p.y);
+      if(p.kind==='spark'){ const k=p.s*(.6+.4*Math.sin(p.life*20)); cx.fillStyle=p.c; cx.shadowColor=p.c; cx.shadowBlur=8; cx.beginPath();
+        for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr=i%2?k*.35:k; cx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);} cx.closePath(); cx.fill(); }
+      else { cx.rotate(p.r*Math.PI/180); cx.fillStyle=p.c; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r/20))); }
+      cx.restore(); });
+    if(parts.length) requestAnimationFrame(loop); else { running=false; cx.clearRect(0,0,innerWidth,innerHeight); } }
+  const go=()=>{ if(!running){ size(); requestAnimationFrame(loop);} };
+  const golds=['#f3d08a','#fff1c9','#e2b25f','#f6e4c4','#ffffff'];
+  function glitter(rect,n){ for(let i=0;i<n;i++) parts.push({kind:'spark',x:rect.left+Math.random()*rect.width,y:rect.top+Math.random()*rect.height,vx:(Math.random()-.5)*1.6,vy:-Math.random()*2.2-.4,g:-.012,r:0,vr:0,s:2+Math.random()*4,c:golds[i%5],life:1+Math.random()*.8,decay:.008+Math.random()*.01}); go(); }
+  function confetti(x,y){ for(let i=0;i<140;i++) parts.push({kind:'c',x,y,vx:(Math.random()-.5)*15,vy:-Math.random()*14-4,g:.32,r:Math.random()*360,vr:(Math.random()-.5)*14,w:4+Math.random()*6,h:6+Math.random()*9,c:golds[i%5],life:1.4,decay:.006}); go(); }
+  // 1. the seal
+  $g('seal').onclick=()=>{
+    try{ if(typeof musicWanted!=='undefined' && musicWanted) Music.start(); }catch(e){}
+    const r=$g('seal').getBoundingClientRect(); $g('seal').classList.add('broken'); glitter(r,26);
+    setTimeout(()=>gift.classList.add('unroll'),350); };
+  const inner=$g('scrollText'), hint=$g('scrollHint');
+  inner.addEventListener('scroll',()=>{ if(inner.scrollTop+inner.clientHeight>inner.scrollHeight-40) hint.style.opacity=0; });
+  // 2. "Druk hier": roll up and glitter away
+  $g('openPresent').onclick=()=>{
+    gift.classList.add('rollup');
+    setTimeout(()=>{ const sc=$g('scroll'), r=sc.getBoundingClientRect(); glitter(r,170); sc.classList.add('poof'); },850);
+    setTimeout(()=>{ $g('scroll').style.display='none'; gift.classList.add('ready'); $g('bow').classList.add('wiggle'); },2400); };
+  // 3. pull the bow
+  const bow=$g('bow'); let d=null, opened=false;
+  function unwrap(dx,dy){ if(opened) return; opened=true; bow.classList.remove('wiggle','drag'); bow.classList.add('gone');
+    const L=Math.hypot(dx,dy)||1; bow.style.transform=`translate(${dx/L*120}vw,${dy/L*120}vh) rotate(${dx>0?140:-140}deg) scale(.6)`;
+    const r=bow.getBoundingClientRect(); confetti(r.left+r.width/2,r.top+r.height/2);
+    gift.classList.add('open');
+    setTimeout(()=>gift.classList.add('bye'),1500); setTimeout(()=>gift.remove(),2800); }
+  bow.addEventListener('pointerdown',e=>{ if(!gift.classList.contains('ready')||opened) return; d={x:e.clientX,y:e.clientY}; bow.classList.remove('wiggle'); bow.classList.add('drag'); try{bow.setPointerCapture(e.pointerId);}catch(_){} });
+  bow.addEventListener('pointermove',e=>{ if(!d) return; const dx=e.clientX-d.x, dy=e.clientY-d.y, L=Math.hypot(dx,dy);
+    bow.style.transform=`translate(${dx*.75}px,${dy*.75}px) rotate(${dx*.08}deg) scale(${1+Math.min(L,140)/900})`;
+    if(L>130){ d=null; unwrap(dx,dy); } });
+  const end=e=>{ if(!d) return; const dx=e.clientX-d.x, dy=e.clientY-d.y; d=null; bow.classList.remove('drag');
+    if(Math.hypot(dx,dy)<8){ unwrap(0,1); return; }            // a simple tap also pulls it loose
+    bow.style.transform=''; bow.classList.add('wiggle'); };
+  bow.addEventListener('pointerup',end); bow.addEventListener('pointercancel',end);
+  addEventListener('resize',()=>{ if(running) size(); });
+})();
+// ===== BIRTHDAY-FEATURE END =====
 </script>
 </body>
 </html>
