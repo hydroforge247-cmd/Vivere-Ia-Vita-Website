@@ -63,7 +63,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .marker .label em{display:block;font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
 .marker .label b{display:block;font-size:16px;white-space:nowrap}
 .marker .label i{display:block;font-style:normal;font-size:12px;color:var(--muted)}
-.marker .go{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:8px 12px;border-radius:10px;background:var(--amber);color:var(--amber-ink);font-size:12.5px;font-weight:800;letter-spacing:.04em}
+.marker .go{display:flex;white-space:nowrap;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:8px 12px;border-radius:10px;background:var(--amber);color:var(--amber-ink);font-size:12.5px;font-weight:800;letter-spacing:.04em}
 .marker .stem{width:2px;height:18px;background:linear-gradient(var(--amber),rgba(242,180,90,.2))}
 .marker .pin{width:14px;height:14px;border-radius:50%;background:var(--amber);position:relative;box-shadow:0 0 0 4px rgba(242,180,90,.25)}
 .marker .pin::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--amber);animation:ping 2.2s ease-out infinite}
@@ -518,9 +518,15 @@ function renderMarkers(){
     const u=UNITS[m.u], b=document.createElement('button');
     b.className='marker';
     b.style.left=Math.min(Math.max(r.ox+m.x*1080*r.s,100),stage.clientWidth-100)+'px';
-    b.style.top=Math.max(r.oy+m.y*1920*r.s,200)+'px';
+    b.style.top=(r.oy+m.y*1920*r.s)+'px';
     b.innerHTML=`<span class="label glass"><em>${u.kind}${seen.has(m.u)?' · seen':''}</em><b>${u.name}</b><i>from ${u.from}${u.phoneOnly?'':' / night'}</i><span class="go">${u.phoneOnly?'See camping details':'Tap to go inside'} →</span></span><span class="stem"></span><span class="pin"></span>`;
     b.setAttribute('aria-label',(u.phoneOnly?'Open ':'Go inside ')+u.name); b.onclick=()=>openInfo(m.u); box.appendChild(b);
+    // keep the whole marker clear of the top bar and the walking controls
+    const st=stage.getBoundingClientRect(), topEdge=$('#top').getBoundingClientRect().bottom-st.top+12;
+    const navTop=($('#nav').getBoundingClientRect().top||st.bottom)-st.top-110, h=b.offsetHeight, w=b.offsetWidth;
+    let y=parseFloat(b.style.top); y=Math.max(y,topEdge+h); y=Math.min(y,Math.max(topEdge+h,navTop));
+    b.style.top=y+'px';
+    b.style.left=Math.min(Math.max(parseFloat(b.style.left),w/2+10),stage.clientWidth-w/2-10)+'px';
   });
 }
 const icon=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
@@ -660,7 +666,7 @@ const Music=(()=>{
   function init(){
     ctx=new (window.AudioContext||window.webkitAudioContext)();
     master=ctx.createGain(); master.gain.value=0;
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1700; lp.Q.value=.4;
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3200; lp.Q.value=.3;
     master.connect(lp); lp.connect(ctx.destination);
     noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
     const crackle=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate), c=crackle.getChannelData(0);
@@ -668,7 +674,7 @@ const Music=(()=>{
     const vin=ctx.createBufferSource(); vin.buffer=crackle; vin.loop=true; const vg=ctx.createGain(); vg.gain.value=.35; vin.connect(vg); vg.connect(master); vin.start();
   }
   function keys(t,midi,dur,vel){
-    [[ 'sine',1,1],['triangle',2,.18]].forEach(([type,mul,g])=>{
+    [['sine',1,1],['triangle',2,.35],['sine',3,.08]].forEach(([type,mul,g])=>{
       const o=ctx.createOscillator(), e=ctx.createGain(); o.type=type; o.frequency.value=hz(midi)*mul; o.detune.value=(Math.random()-.5)*8;
       e.gain.setValueAtTime(0,t); e.gain.linearRampToValueAtTime(vel*g,t+.02); e.gain.exponentialRampToValueAtTime(.0001,t+dur);
       o.connect(e); e.connect(master); o.start(t); o.stop(t+dur+.05); });
@@ -680,19 +686,19 @@ const Music=(()=>{
   function tick(){
     while(next<ctx.currentTime+.4){
       const t=next+(step%2?sp*.18:0), bar=Math.floor(step/8), ch=CH[Math.floor(bar/2)%4], s8=step%8;
-      if(s8===0 && bar%2===0) ch.forEach((m,i)=>keys(t+i*.03,m,sp*15,.11));
-      if(s8===0) keys(t,ch[0]-24,sp*7,.22);
+      if(s8===0 && bar%2===0) ch.forEach((m,i)=>keys(t+i*.03,m+12*(i>1),sp*15,.12));
+      if(s8===0){ keys(t,ch[0]-24,sp*7,.2); keys(t,ch[0]-12,sp*7,.12); }
       if(s8===4 && bar%2===1) keys(t,ch[0]-17,sp*3,.15);
       if(s8===0||s8===5) kick(t);
       if(s8===2||s8===6) noise(t,1800,'bandpass',.18,.12);
       noise(t,7000,'highpass',.04,s8%2?.025:.04);
-      if(Math.random()<.22 && s8%2===0) keys(t,SC[Math.floor(Math.random()*SC.length)],sp*4,.06);
+      if(Math.random()<.24 && s8%2===0) keys(t,SC[Math.floor(Math.random()*SC.length)],sp*4,.09);
       next+=sp; step++;
     }
   }
   return {
     start(){ try{ if(!ctx){ init(); next=ctx.currentTime+.1; } ctx.resume(); on=true;
-      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value,ctx.currentTime); master.gain.linearRampToValueAtTime(.16,ctx.currentTime+3);
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value,ctx.currentTime); master.gain.linearRampToValueAtTime(.42,ctx.currentTime+3);
       clearInterval(timer); timer=setInterval(tick,100); tick(); }catch(e){} },
     stop(){ if(!ctx) return; on=false; master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value,ctx.currentTime); master.gain.linearRampToValueAtTime(0,ctx.currentTime+.8);
       setTimeout(()=>{ if(!on){ clearInterval(timer); ctx.suspend(); } },900); },
@@ -700,12 +706,13 @@ const Music=(()=>{
   };
 })();
 let musicWanted=true;
+addEventListener('pointerdown',()=>{ if(musicWanted && !$('#intro') && !Music.on) Music.start(); },{passive:true});
 $('#musicBtn').onclick=()=>{ musicWanted=!Music.on; musicWanted?Music.start():Music.stop(); $('#musicBtn').classList.toggle('on',musicWanted); };
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) Music.stop(); else if(musicWanted && !$('#intro')) Music.start(); });
 
 // ---------------- intro ----------------
 $('#intro').style.backgroundImage=`linear-gradient(to bottom,rgba(0,0,0,.08),rgba(0,0,0,.1) 38%,rgba(8,16,15,.96) 78%),url(${U('intro.jpg')})`;
-function begin(withGuide){ if(musicWanted) Music.start(); const el=$('#intro'); if(!el) return; el.classList.add('gone');
+function begin(withGuide){ if(musicWanted){ Music.start(); setTimeout(()=>toast('♪ Soft music is playing. Tap ♪ to mute.'),1200); } const el=$('#intro'); if(!el) return; el.classList.add('gone');
   setTimeout(()=>{ el.remove(); if(withGuide){ setGuided(true); nextGuided(); } },650); }
 $('#startWalk').onclick=()=>begin(false);
 
