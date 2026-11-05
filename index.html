@@ -380,7 +380,7 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 #gift .burst{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 46%,rgba(255,236,190,.85),rgba(255,226,170,.25) 30%,transparent 60%)}
 #gift.opening .burst{animation:burst 1.6s ease-out}
 @keyframes burst{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
-#gift canvas{position:absolute;inset:0;pointer-events:none;z-index:5}
+#confetti{position:absolute;inset:0;pointer-events:none;z-index:5}
 /* the scroll */
 #scroll{position:absolute;left:50%;top:50%;width:min(86vw,440px);transform:translate(-50%,-50%);z-index:4}
 #scroll.enter{animation:scrollin 1.2s cubic-bezier(.2,.9,.3,1)}
@@ -423,6 +423,10 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 #seal.broken .half.b{transform:translate(70px,70vh) rotate(50deg);opacity:0}
 #tapseal{position:absolute;left:50%;top:50%;margin-top:92px;transform:translateX(-50%);z-index:3;color:#f6e4c4;font-size:13px;font-weight:700;letter-spacing:.08em;white-space:nowrap;text-shadow:0 2px 10px rgba(0,0,0,.8);transition:opacity .4s}
 #gift.unroll #tapseal{opacity:0}
+#gift.three{background:#0b0806}
+#gift.three .gq,#gift.three .rp,#gift.three #bow,#gift.three #pullR,#gift.three .burst{display:none}
+#gift3d{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:0}
+#gift .dim{z-index:1}
 @media (prefers-reduced-motion:reduce){#gift *{transition-duration:.01s!important;animation:none!important}}
 /* ===== BIRTHDAY-FEATURE END ===== */
 </style>
@@ -489,6 +493,146 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
   <div id="tapseal">Tik op die seël</div>
  </div>
 </div>
+<script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
+<script type="module">
+// 3D present: real lighting on textured paper, satin ribbon and a bow that unties when you pull it.
+import * as THREE from 'three';
+import { RoomEnvironment } from './lib/RoomEnvironment.js';
+const gift=document.getElementById('gift');
+if(gift){ try{ build(); }catch(e){ console.warn('3D present unavailable, using the flat version',e); } }
+function build(){
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=0.95;
+  const cv=renderer.domElement; cv.id='gift3d'; gift.insertBefore(cv,gift.firstChild); gift.classList.add('three');
+  const scene=new THREE.Scene();
+  const pmrem=new THREE.PMREMGenerator(renderer); scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture; scene.environmentIntensity=0.38;
+  const VH=10, cam=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,0.5,100);
+  const dist=VH/2/Math.tan(THREE.MathUtils.degToRad(20)); cam.position.set(0,-4.2,dist*.97); cam.lookAt(0,.55,0);
+  const key=new THREE.DirectionalLight(0xffe9cc,2.9); key.position.set(-7,6,6.5); key.castShadow=true;
+  Object.assign(key.shadow.camera,{left:-9,right:9,top:9,bottom:-9,near:1,far:40}); key.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048); key.shadow.radius=4; key.shadow.bias=-0.0004; key.shadow.normalBias=0.02;
+  scene.add(key); scene.add(new THREE.HemisphereLight(0xfff4e0,0x0b1a14,0.35));
+  const rim=new THREE.PointLight(0xffd9a0,18,30,2); rim.position.set(4,-3,5); scene.add(rim);
+
+  // ---------- textures (generated, seamless) ----------
+  function noise2(size,cells,seed){ let s=seed; const R=()=>{s=(s*16807)%2147483647;return s/2147483647;};
+    const g=[...Array(cells*cells)].map(R), out=new Float32Array(size*size), sm=t=>t*t*(3-2*t);
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){ const fx=x/size*cells, fy=y/size*cells, x0=Math.floor(fx), y0=Math.floor(fy), tx=sm(fx-x0), ty=sm(fy-y0);
+      const a=g[(y0%cells)*cells+x0%cells], b=g[(y0%cells)*cells+(x0+1)%cells], c=g[((y0+1)%cells)*cells+x0%cells], d=g[((y0+1)%cells)*cells+(x0+1)%cells];
+      out[y*size+x]=(a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+d*tx)*ty; } return out; }
+  const S=512, TILE=2.6;
+  const crinkle=new Float32Array(S*S); [[4,.5,3],[9,.25,7],[23,.14,11],[61,.07,13],[128,.035,17]].forEach(([c,a,sd])=>{ const n=noise2(S,c,sd); for(let i=0;i<S*S;i++) crinkle[i]+=n[i]*a; });
+  function tex(draw,srgb){ const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d'); draw(g,c);
+    const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=renderer.capabilities.getMaxAnisotropy(); if(srgb) t.colorSpace=THREE.SRGBColorSpace; return t; }
+  const dots=[]; const step=S/8; for(let y=0;y<8;y++)for(let x=0;x<8;x++){ dots.push([x*step+step/2+(y%2?step/2:0),y*step+step/2]); }
+  const colorMap=tex(g=>{ const im=g.createImageData(S,S);
+    for(let i=0;i<S*S;i++){ const v=crinkle[i]-.5, f=(Math.random()-.5)*6; im.data[i*4]=18+v*14+f; im.data[i*4+1]=58+v*22+f; im.data[i*4+2]=44+v*16+f; im.data[i*4+3]=255; }
+    g.putImageData(im,0,0); g.strokeStyle='rgba(206,168,96,.16)'; g.lineWidth=1.2;
+    for(let k=-S;k<S*2;k+=step){ g.beginPath(); g.moveTo(k,0); g.lineTo(k+S,S); g.stroke(); g.beginPath(); g.moveTo(k,S); g.lineTo(k+S,0); g.stroke(); }
+    dots.forEach(([x,y])=>{ [[0,0],[S,0],[0,S],[-S,0],[0,-S]].forEach(([ox,oy])=>{ const r=g.createRadialGradient(x+ox,y+oy,0,x+ox,y+oy,6); r.addColorStop(0,'#f4d796'); r.addColorStop(.6,'#c79a4c'); r.addColorStop(1,'rgba(199,154,76,0)'); g.fillStyle=r; g.beginPath(); g.arc(x+ox,y+oy,6,0,7); g.fill(); }); }); },true);
+  const mrMap=tex(g=>{ g.fillStyle='rgb(0,205,0)'; g.fillRect(0,0,S,S); g.strokeStyle='rgb(0,140,150)'; g.lineWidth=1.2;
+    for(let k=-S;k<S*2;k+=step){ g.beginPath(); g.moveTo(k,0); g.lineTo(k+S,S); g.stroke(); g.beginPath(); g.moveTo(k,S); g.lineTo(k+S,0); g.stroke(); }
+    dots.forEach(([x,y])=>{ [[0,0],[S,0],[0,S],[-S,0],[0,-S]].forEach(([ox,oy])=>{ g.fillStyle='rgb(0,70,255)'; g.beginPath(); g.arc(x+ox,y+oy,4.5,0,7); g.fill(); }); }); });
+  const normalMap=tex(g=>{ const im=g.createImageData(S,S), H=(x,y)=>crinkle[((y+S)%S)*S+((x+S)%S)];
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){ const dx=(H(x+1,y)-H(x-1,y))*6, dy=(H(x,y+1)-H(x,y-1))*6, l=Math.hypot(dx,dy,1), i=(y*S+x)*4;
+      im.data[i]=(-dx/l*.5+.5)*255; im.data[i+1]=(dy/l*.5+.5)*255; im.data[i+2]=(1/l*.5+.5)*255; im.data[i+3]=255; } g.putImageData(im,0,0); });
+  const weave=tex(g=>{ const im=g.createImageData(S,S); for(let y=0;y<S;y++)for(let x=0;x<S;x++){ const i=(y*S+x)*4, v=Math.sin(x*1.6)*.5+Math.sin(x*.21+y*.02)*.25;
+      im.data[i]=(v*.18+.5)*255; im.data[i+1]=128; im.data[i+2]=235; im.data[i+3]=255; } g.putImageData(im,0,0); });
+
+  const paperMat=new THREE.MeshStandardMaterial({map:colorMap,normalMap,normalScale:new THREE.Vector2(.55,.55),roughnessMap:mrMap,metalnessMap:mrMap,roughness:1,metalness:1,side:THREE.DoubleSide,transparent:true});
+  const satin=new THREE.MeshPhysicalMaterial({color:0xa8711f,metalness:.62,roughness:.4,clearcoat:.3,clearcoatRoughness:.35,sheen:.45,sheenColor:new THREE.Color(0xf2c070),sheenRoughness:.5,
+    anisotropy:.75,normalMap:weave,normalScale:new THREE.Vector2(.25,.25),side:THREE.DoubleSide,transparent:true});
+
+  // ---------- layout in world units ----------
+  let W=VH*innerWidth/innerHeight; const by=VH*(0.5-0.46);           // bow sits where the ribbons cross
+  const paper=new THREE.Group(); scene.add(paper);
+  const flaps=[];
+  function buildPaper(){ paper.clear(); flaps.length=0;
+    const PW=W*1.5, PH=VH*1.5, hx=-PW/2, hy=-PH/2;
+    [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(([sx,sy])=>{
+      const w=PW/2, h=sy>0?PH/2-by:PH/2+by, geo=new THREE.PlaneGeometry(w,h,24,24), pos=geo.attributes.position, uv=geo.attributes.uv;
+      const pivot=new THREE.Group(); pivot.position.set(sx*PW/2,0,0); paper.add(pivot);       // hinge on the outer edge
+      const cx=sx*w/2, cy=by+sy*h/2;
+      for(let i=0;i<pos.count;i++){ const wx=pos.getX(i)+cx, wy=pos.getY(i)+cy; uv.setXY(i,wx/TILE,wy/TILE); }
+      const m=new THREE.Mesh(geo,paperMat.clone()); m.position.set(cx-sx*PW/2,cy,0); m.receiveShadow=true; pivot.add(m);
+      flaps.push({pivot,sx,sy,mesh:m}); }); }
+  buildPaper();
+  // ribbons: four pieces running out from the bow
+  const RW=0.62, RT=0.035, ribbons=[];
+  function rib(len,dir){ const g=new THREE.BoxGeometry(dir==='v'?RW:len,dir==='v'?len:RW,RT); const m=new THREE.Mesh(g,satin); m.castShadow=true; m.receiveShadow=true; scene.add(m); return m; }
+  function buildRibbons(){ ribbons.forEach(r=>scene.remove(r.m)); ribbons.length=0;
+    const top=VH, bot=VH, side=W;
+    const vt=rib(top,'v'); vt.position.set(0,by+top/2,RT/2+.005); ribbons.push({m:vt,dx:0,dy:1});
+    const vb=rib(bot,'v'); vb.position.set(0,by-bot/2,RT/2+.005); ribbons.push({m:vb,dx:0,dy:-1});
+    const hl=rib(side,'h'); hl.position.set(-side/2,by,RT+.01); ribbons.push({m:hl,dx:-1,dy:0});
+    const hr=rib(side,'h'); hr.position.set(side/2,by,RT+.01); ribbons.push({m:hr,dx:1,dy:0}); }
+  buildRibbons();
+
+  // ---------- the bow: ribbon strips swept along curves ----------
+  const bow=new THREE.Group(); bow.position.set(0,by,.06); scene.add(bow);
+  const loopMat=satin.clone(), tailMat=satin.clone();
+  function strip(pts,width,widthDir,segs=120){
+    const curve=new THREE.CatmullRomCurve3(pts,false,'catmullrom',.5), P=curve.getSpacedPoints(segs), pos=[], uv=[], idx=[];
+    for(let i=0;i<=segs;i++){ const t=curve.getTangentAt(Math.min(i/segs,1)), w=widthDir(t,P[i],i/segs).clone(); w.sub(t.clone().multiplyScalar(w.dot(t))).normalize().multiplyScalar(width/2);
+      pos.push(P[i].x+w.x,P[i].y+w.y,P[i].z+w.z,P[i].x-w.x,P[i].y-w.y,P[i].z-w.z); uv.push(i/segs,0,i/segs,1);
+      if(i<segs){ const a=i*2; idx.push(a,a+1,a+2,a+1,a+3,a+2); } }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); g.setIndex(idx); g.computeVertexNormals(); return g; }
+  const LOOP=[[0,0],[.35,.38],[.95,.72],[1.55,.66],[1.9,.22],[1.78,-.22],[1.2,-.42],[.5,-.24],[0,0]];
+  function loopGeo(side,k){ const L=1.3*(1-.86*k), tilt=THREE.MathUtils.degToRad(66-34*k), e1=new THREE.Vector3(side,0,0), e2=new THREE.Vector3(0,Math.cos(tilt),Math.sin(tilt)), n=new THREE.Vector3().crossVectors(e1,e2).normalize();
+    const rot=new THREE.Matrix4().makeRotationZ(side*THREE.MathUtils.degToRad(-14+34*k));
+    const pts=LOOP.map(([a,b])=>e1.clone().multiplyScalar(a*L).add(e2.clone().multiplyScalar(b*L)).add(new THREE.Vector3(0,0,.12)).applyMatrix4(rot));
+    return strip(pts,RW*1.12,()=>n); }
+  function tailGeo(side,end){ const p=end?[new THREE.Vector3(side*.12,-.1,.12),new THREE.Vector3((end.x*.35+side*.2),end.y*.4-.2,.35),new THREE.Vector3(end.x*.75,end.y*.78,.25),end]
+      :[new THREE.Vector3(side*.12,-.1,.12),new THREE.Vector3(side*.42,-.9,.06),new THREE.Vector3(side*.7,-1.8,.03),new THREE.Vector3(side*.86,-2.5,.03),new THREE.Vector3(side*.95,-2.85,.03)];
+    return strip(p,RW*.9,t=>new THREE.Vector3().crossVectors(t,new THREE.Vector3(0,0,1))); }
+  const loopL=new THREE.Mesh(loopGeo(-1,0),loopMat), loopR=new THREE.Mesh(loopGeo(1,0),loopMat), tailL=new THREE.Mesh(tailGeo(-1),tailMat), tailR=new THREE.Mesh(tailGeo(1),tailMat);
+  const knot=new THREE.Mesh(new THREE.CapsuleGeometry(.2,.32,8,20),loopMat); knot.rotation.z=Math.PI/2; knot.scale.set(1,1,.75); knot.position.z=.16;
+  [loopL,loopR,tailL,tailR,knot].forEach(m=>{ m.castShadow=true; bow.add(m); });
+
+  // ---------- interaction ----------
+  const ray=new THREE.Raycaster(), plane=new THREE.Plane(new THREE.Vector3(0,0,1),-.25), v2=new THREE.Vector2(), hit=new THREE.Vector3();
+  function toWorld(x,y){ v2.set(x/innerWidth*2-1,-(y/innerHeight)*2+1); ray.setFromCamera(v2,cam); ray.ray.intersectPlane(plane,hit); return hit.clone(); }
+  function bowScreen(){ const p=bow.position.clone().project(cam); return [(p.x+1)/2*innerWidth,(1-p.y)/2*innerHeight]; }
+  let drag=null, k=0, state='idle', pulledEnd=null, t0=0;
+  function setK(v,end){ k=v; loopL.geometry.dispose(); loopL.geometry=loopGeo(-1,k); loopR.geometry.dispose(); loopR.geometry=loopGeo(1,k);
+    knot.scale.set(1-k*.35,1-k*.2,.75); loopMat.opacity=1-Math.max(0,k-.8)*5;
+    if(end){ const local=end.clone().sub(bow.position); tailR.geometry.dispose(); tailR.geometry=tailGeo(1,local); } }
+  gift.addEventListener('pointerdown',e=>{ if(!gift.classList.contains('ready')||state!=='idle'||e.target.closest('#scroll')) return; const [bx,byy]=bowScreen();
+    if(Math.hypot(e.clientX-bx,e.clientY-byy)>Math.min(170,innerWidth*.42)) return;
+    drag={x:e.clientX,y:e.clientY,moved:false}; gift.classList.add('pulling'); try{gift.setPointerCapture(e.pointerId);}catch(_){} });
+  gift.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y, d=Math.hypot(dx,dy); if(d>6) drag.moved=true;
+    const v=Math.min(1,d/200); pulledEnd=toWorld(e.clientX,e.clientY); setK(v*.9,pulledEnd);
+    if(v>=.8){ const dd=drag; drag=null; untie(dx,dy); } });
+  const up=e=>{ if(!drag) return; const dd=drag; drag=null;
+    if(!dd.moved){ untie(.25,1); return; }                             // a simple tap pulls it too
+    gift.classList.remove('pulling'); state='spring'; t0=performance.now(); };
+  gift.addEventListener('pointerup',up); gift.addEventListener('pointercancel',up);
+  let dir=new THREE.Vector3();
+  function untie(dx,dy){ state='untie'; t0=performance.now(); dir.set(dx,-dy,0).normalize(); gift.classList.add('pulling');
+    if(!pulledEnd) pulledEnd=bow.position.clone().add(new THREE.Vector3(.9,-2.8,.25)); }
+  addEventListener('resize',()=>{ renderer.setSize(innerWidth,innerHeight); cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); W=VH*cam.aspect; buildPaper(); buildRibbons(); });
+
+  // ---------- animation ----------
+  const clock=new THREE.Clock(); const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  function frame(){
+    const time=clock.getElapsedTime(), now=performance.now();
+    key.position.x=-7+Math.sin(time*.25)*1.2; key.position.y=6+Math.cos(time*.2)*.8;          // light breathes gently
+    if(state==='idle'){ const w=gift.classList.contains('ready')?Math.max(0,Math.sin(time*2.2))**8:0; bow.rotation.z=Math.sin(time*9)*.05*w; bow.scale.setScalar(1+.03*w); }
+    if(state==='spring'){ const q=Math.min(1,(now-t0)/450); setK(k*(1-q*.35)); tailR.geometry.dispose(); tailR.geometry=tailGeo(1); if(q>=1||k<.01){ setK(0); state='idle'; } }
+    if(state==='untie'){ const q=(now-t0)/1000;
+      if(q<.55){ const e=ease(q/.55); setK(Math.min(1,k+(1-k)*e*.2),pulledEnd.clone().add(dir.clone().multiplyScalar(e*e*14))); }
+      else if(q<1.0){ const e=(q-.55)/.45; loopMat.opacity=tailMat.opacity=Math.max(0,1-e*1.6); knot.scale.multiplyScalar(.96); bow.position.z=.06+e*.3; }
+      else if(q<2.0){ bow.visible=false; const e=ease(Math.min(1,(q-1.0)/.9)); ribbons.forEach(r=>{ const L=r.dx?W:VH; r.m.position.x=(r.dx? r.dx*W/2:0)+r.dx*e*L*1.05; r.m.position.y=(r.dy? by+r.dy*VH/2:by)+r.dy*e*L*1.05; }); }
+      else if(q<3.6){ if(!gift.classList.contains('opening')){ gift.classList.add('opening'); window.__giftConfetti&&window.__giftConfetti(innerWidth/2,innerHeight*.46); }
+        const e=ease(Math.min(1,(q-2.0)/1.4)); flaps.forEach((f,i)=>{ const d=Math.min(1,Math.max(0,e*1.12-i*.04)); f.pivot.rotation.y=-f.sx*d*THREE.MathUtils.degToRad(100); f.pivot.rotation.x=f.sy*d*.25; f.mesh.material.opacity=1-Math.max(0,d-.6)*2.5; }); }
+      else { state='done'; gift.classList.add('bye'); setTimeout(()=>{ renderer.dispose(); gift.remove(); },1200); } }
+    renderer.render(scene,cam);
+    if(state!=='done') requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+</script>
 <!-- ===== BIRTHDAY-FEATURE END ===== -->
 <div id="backdrop"></div>
 <div id="app">
@@ -1291,6 +1435,7 @@ still.src=img(STOPS[0].id); settle();
   const spark=(x,y,o={})=>parts.push(Object.assign({kind:'spark',x,y,vx:(Math.random()-.5)*.8,vy:-Math.random()*1.4-.3,g:-.006,r:0,vr:0,s:2+Math.random()*4.5,c:golds[Math.floor(Math.random()*6)],life:1+Math.random()*.9,decay:.006+Math.random()*.008,ph:Math.random()*6,wob:.25},o));
   const dust=(x,y)=>parts.push({kind:'dust',x,y,vx:(Math.random()-.5)*.5,vy:-Math.random()*.9-.2,g:-.004,r:0,vr:0,s:.8+Math.random()*1.6,c:golds[Math.floor(Math.random()*6)],life:1.2+Math.random(),decay:.007,ph:Math.random()*6,wob:.35});
   function confetti(x,y){ for(let i=0;i<150;i++) parts.push({kind:'c',x,y,vx:(Math.random()-.5)*15,vy:-Math.random()*14-4,g:.3,r:Math.random()*360,vr:(Math.random()-.5)*14,w:4+Math.random()*6,h:6+Math.random()*9,c:golds[i%6],life:1.5,decay:.006,ph:0,wob:0}); go(); }
+  window.__giftConfetti=confetti;
   // 1. break the seal, the scroll rolls open
   $g('seal').onclick=()=>{
     try{ if(typeof musicWanted!=='undefined' && musicWanted) Music.start(); }catch(e){}
@@ -1299,19 +1444,45 @@ still.src=img(STOPS[0].id); settle();
     setTimeout(()=>gift.classList.add('unroll'),350); };
   const inner=$g('scrollText'), hint=$g('scrollHint');
   inner.addEventListener('scroll',()=>{ if(inner.scrollTop+inner.clientHeight>inner.scrollHeight-40) hint.style.opacity=0; });
-  // 2. "Druk hier": the scroll rolls up, rises, glows and dissolves upward into fairy dust
+  // 2. "Druk hier": the scroll rolls up, then flows away as fine golden dust, sweeping from one end to the other
+  function disintegrate(el,onDone){
+    const r=el.getBoundingClientRect(), pad=8, k=Math.min(devicePixelRatio||1,2);
+    const c=document.createElement('canvas'), w=Math.ceil(r.width+pad*2), h=Math.ceil(r.height+pad*2); c.width=w*k; c.height=h*k;
+    const g=c.getContext('2d'); g.scale(k,k); g.translate(pad,pad);
+    const pq=el.querySelector('.paper').getBoundingClientRect(), pg=g.createLinearGradient(0,pq.top-r.top,0,pq.bottom-r.top);
+    pg.addColorStop(0,'#d9bf8a'); pg.addColorStop(.5,'#f5e8c9'); pg.addColorStop(1,'#d9bf8a'); g.fillStyle=pg; g.fillRect(pq.left-r.left,pq.top-r.top-4,pq.width,pq.height+8);
+    el.querySelectorAll('.rod').forEach(rod=>{ const q=rod.getBoundingClientRect(), x=q.left-r.left, y=q.top-r.top, gr=g.createLinearGradient(0,y,0,y+q.height);
+      [[0,'#3a2210'],[.35,'#8a5a2e'],[.5,'#c48d52'],[.7,'#6e4320'],[1,'#2d1a0c']].forEach(a=>gr.addColorStop(a[0],a[1]));
+      g.fillStyle=gr; g.beginPath(); g.roundRect(x,y,q.width,q.height,q.height/2); g.fill();
+      [x-12,x+q.width-10].forEach(kx=>{ const kg=g.createRadialGradient(kx+9,y,2,kx+11,y+15,22); kg.addColorStop(0,'#f6d28d'); kg.addColorStop(.6,'#a77234'); kg.addColorStop(1,'#5a3814');
+        g.fillStyle=kg; g.beginPath(); g.roundRect(kx,y-5,22,q.height+10,9); g.fill(); }); });
+    const data=g.getImageData(0,0,c.width,c.height).data, P=[], STEP=Math.max(1,Math.round(1.6*k));
+    for(let y=0;y<c.height;y+=STEP) for(let x=0;x<c.width;x+=STEP){ const i=(y*c.width+x)*4; if(data[i+3]<40) continue;
+      const fx=x/c.width, n=Math.sin(y*.07+fx*9)*.06+Math.random()*.12;
+      P.push({x:r.left-pad+x/k,y:r.top-pad+y/k,r:data[i],gc:data[i+1],b:data[i+2],d:fx*1.25+n,vx:0,vy:0,s:STEP/k*1.05,seed:Math.random()*6.28}); }
+    el.style.visibility='hidden';
+    const layer=document.createElement('canvas'); layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6';
+    gift.appendChild(layer); layer.width=innerWidth*k; layer.height=innerHeight*k; const lc=layer.getContext('2d'); lc.scale(k,k);
+    const T0=performance.now();
+    (function tick(now){ const t=(now-T0)/1000; lc.clearRect(0,0,innerWidth,innerHeight); let alive=0;
+      for(const p of P){ const age=t-p.d;
+        if(age<=0){ lc.globalAlpha=1; lc.fillStyle=`rgb(${p.r},${p.gc},${p.b})`; lc.fillRect(p.x,p.y,p.s,p.s); alive++; continue; }
+        const life=1.9; if(age>life) continue; alive++;
+        const f=age/life, swirl=Math.sin(p.seed+age*2.4+p.y*.02);
+        p.vx+=(.05+swirl*.07); p.vy+=(-.06+Math.cos(p.seed+age*1.7)*.04);
+        p.x+=p.vx; p.y+=p.vy;
+        const warm=Math.min(1,age*1.6), R=p.r+(255-p.r)*warm, G=p.gc+(226-p.gc)*warm, B=p.b+(160-p.b)*warm;
+        lc.globalAlpha=(1-f)*(1-f); lc.fillStyle=`rgb(${R|0},${G|0},${B|0})`;
+        const sz=p.s*(1-f*.6); lc.fillRect(p.x,p.y,sz,sz); }
+      if(alive && t<4.2) requestAnimationFrame(tick); else { layer.remove(); onDone&&onDone(); } })(T0);
+  }
   $g('openPresent').onclick=()=>{
     const sc=$g('scroll'); gift.classList.add('rollup');
-    setTimeout(()=>sc.classList.add('lift'),900);
-    setTimeout(()=>{ const t0=performance.now(), D=2800; sc.classList.add('dissolve');
-      emitter=()=>{ const k=(performance.now()-t0)/D; if(k>1){ emitter=null; return; }
-        const r=sc.getBoundingClientRect(), y=r.bottom-(r.height*(k*1.05));
-        for(let q=0;q<4;q++) dust(r.left+Math.random()*r.width,y+(Math.random()-.5)*14);
-        if(Math.random()<.55) spark(r.left+Math.random()*r.width,y+(Math.random()-.5)*10,{vy:-Math.random()*1.1-.2}); };
-      go(); },1900);
-    setTimeout(()=>{ sc.style.display='none'; const r=gift.getBoundingClientRect();
-      for(let k=0;k<26;k++) spark(r.width/2+(Math.random()-.5)*120,r.height*.46+(Math.random()-.5)*60,{s:3+Math.random()*5});
-      gift.classList.add('ready'); $g('bow').classList.add('wiggle'); },4900); };
+    const paperEl=sc.querySelector('.paper'); let started=false;
+    const startDust=()=>{ if(started) return; started=true; disintegrate(sc,()=>{ sc.style.display='none'; }); };
+    paperEl.addEventListener('transitionend',e=>{ if(e.propertyName==='height') setTimeout(startDust,150); },{once:true});
+    setTimeout(startDust,1600);
+    setTimeout(()=>{ gift.classList.add('ready'); $g('bow').classList.add('wiggle'); },3300); };
   // 3. pull the ribbon: the loops slip through the knot, then everything falls open
   const bow=$g('bow'), L=$g('loopL'), R=$g('loopR'), K=$g('knot'), TL=$g('tailL'), TR=$g('tailR'), pp=$g('pullPath'), ph=$g('pullHi');
   let d=null, done=false, t=0;
