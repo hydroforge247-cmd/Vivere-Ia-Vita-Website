@@ -117,6 +117,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .btn.secondary{border:1px solid var(--line);background:rgba(255,255,255,.04)}
 .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
 .stack{display:grid;gap:10px}
+.start{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:12px 18px 12px 12px;border-radius:22px;text-align:left;color:var(--amber-ink);
+  background:linear-gradient(135deg,#ffd38f,#f2b45a 55%,#e39a3b);box-shadow:0 18px 44px rgba(242,180,90,.38),inset 0 1px 0 rgba(255,255,255,.55);overflow:hidden}
+.start::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);transform:translateX(-120%);animation:sheen 3.6s ease-in-out infinite 1s}
+@keyframes sheen{60%,100%{transform:translateX(120%)}}
+.start .ring{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(29,20,6,.92);color:var(--amber);box-shadow:0 0 0 6px rgba(29,20,6,.12);animation:breathe 2.4s ease-in-out infinite}
+.start .ring svg{width:22px;height:22px;margin-left:3px}
+@keyframes breathe{50%{box-shadow:0 0 0 12px rgba(29,20,6,.06)}}
+.start .txt b{display:block;font-size:18px;font-weight:800}
+#intro .start .txt small{display:block;font-size:12.5px;font-weight:600;opacity:.78;margin-top:1px;letter-spacing:0;text-transform:none;color:var(--amber-ink)}
+.start .arr{margin-left:auto;font-size:22px;font-weight:800}
 .knowit{margin-top:16px;padding:14px;border-radius:18px;display:flex;align-items:center;gap:12px;text-align:left;width:100%}
 .knowit b{display:block;font-size:15px}.knowit span{font-size:12.5px;color:var(--muted)}
 .knowit .go{margin-left:auto;flex:none;padding:10px 14px;border-radius:12px;background:var(--amber);color:var(--amber-ink);font-weight:800;font-size:13px}
@@ -297,7 +307,6 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
    <div class="tools">
     <div class="toolrow">
      <button class="chip amber" data-book>Book now</button>
-     <button class="chip glass" id="guideBtn">▶ Tour</button>
     </div>
     <div class="toolrow">
      <button class="ibtn glass on" id="musicBtn" aria-label="Music on or off" title="Music">♪</button>
@@ -320,12 +329,9 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
    <button class="chip glass admin-link" data-admin>Admin</button>
    <small>Riverside farm stay</small>
    <h2>Vivere <i>La Vita</i></h2>
-   <p>Walk the farm the way our guests do: past the dam, along the river, and right up to the door of every chalet and tent. Explore at your own pace, or let the guided tour take you inside every one.</p>
+   <p>Walk the farm the way our guests do: past the dam, along the river, and right up to the door of every chalet and tent. Step inside every one at your own pace.</p>
    <div class="facts"><span class="pill">9 places to stay</span><span class="pill">Own fishing spots</span><span class="pill">Off-grid &amp; peaceful</span></div>
-   <div class="stack">
-    <button class="btn primary" id="startWalk">Start exploring <span aria-hidden="true">→</span></button>
-    <button class="btn secondary" id="startGuide" style="flex-direction:column;gap:2px">Take the guided tour<span style="font-weight:600;font-size:12.5px;opacity:.75">Sit back: we’ll walk you through and take you inside</span></button>
-   </div>
+   <button class="start" id="startWalk"><span class="ring" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span><span class="txt"><b>Start exploring</b><small>Walk the farm and step inside every chalet</small></span><span class="arr" aria-hidden="true">→</span></button>
    <button class="knowit glass" data-book><div><b>Already know what you want?</b><span>Check dates and book in a minute</span></div><span class="go">Book now</span></button>
   </section>
  </div>
@@ -380,7 +386,7 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const STOPS=[
  {id:'entrance',name:'The farm gate',walk:'w0'},
  {id:'dam',name:'The dam',walk:'w1'},
- {id:'armani',name:'Armani Chalet',walk:'w2',markers:[{x:.5,y:.3,u:'armani'}]},
+ {id:'armani',name:'Armani Chalet',walk:'w2',markers:[{x:.52,y:.26,u:'armani'}]},
  {id:'pixie',name:'Pixie Chalet',walk:'w3',markers:[{x:.52,y:.22,u:'pixie'}]},
  {id:'boathouse',name:'The Boathouse',walk:'w4',markers:[{x:.55,y:.26,u:'boathouse'}]},
  {id:'river',name:'The river',walk:'w5'},
@@ -389,7 +395,7 @@ const STOPS=[
  {id:'pietmyvrou',name:'Piet-my-vrou Tent',walk:'w8',markers:[{x:.6,y:.17,u:'pietmyvrou'}]},
  {id:'hadida',name:'Hadida Tent',walk:'w9',markers:[{x:.56,y:.35,u:'hadida'}]},
  {id:'boskamp',name:'Boskamp',fly:true,markers:[{x:.45,y:.2,u:'boskamp'}]},
- {id:'houdkapper',name:'Houdkapper Tent',walk:'w11',markers:[{x:.5,y:.24,u:'houdkapper'}]},
+ {id:'houdkapper',name:'Houdkapper Tent',walk:'w11',markers:[{x:.42,y:.3,u:'houdkapper'}]},
  {id:'riverview',name:'River View Cottage',markers:[{x:.6,y:.18,u:'riverview'}]},
 ];
 
@@ -625,7 +631,6 @@ let tt=null; function toast(t){ const el=$('#toast'); el.textContent=t; el.class
 // ---------------- guided tour (stop really stops) ----------------
 function setGuided(on){
   guided=on; clearTimeout(guideTimer); guideTimer=null;
-  $('#guideBtn').classList.toggle('on',on); $('#guideBtn').textContent=on?'■ Stop':'▶ Tour';
   $('#gstop').classList.toggle('hidden',!on);
   if(!on && walkFinish) walkFinish();          // end the walk now instead of carrying on
 }
@@ -643,8 +648,7 @@ function nextGuided(){                         // called on arrival at each stop
       wait(3000,next); }); });
 }
 function stopTour(){ setGuided(false); toast('Tour stopped. Explore at your own pace.'); }
-$('#guideBtn').onclick=()=>{ if(guided) return stopTour();
-  closeSheet(); setGuided(true); if(cur===STOPS.length-1) fly(0); else nextGuided(); };
+
 
 // ---------------- music: soft lo-fi, composed live in the browser ----------------
 const Music=(()=>{
@@ -704,7 +708,6 @@ $('#intro').style.backgroundImage=`linear-gradient(to bottom,rgba(0,0,0,.08),rgb
 function begin(withGuide){ if(musicWanted) Music.start(); const el=$('#intro'); if(!el) return; el.classList.add('gone');
   setTimeout(()=>{ el.remove(); if(withGuide){ setGuided(true); nextGuided(); } },650); }
 $('#startWalk').onclick=()=>begin(false);
-$('#startGuide').onclick=()=>begin(true);
 
 // ---------------- gallery ----------------
 let G=null, gi=0;
