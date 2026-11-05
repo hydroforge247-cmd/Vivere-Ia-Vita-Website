@@ -366,6 +366,9 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 
 <script>
 const U = p => (window.MEDIA_GET ? MEDIA_GET(p) : 'media/' + p);
+// Full 1080p on good connections; 720p data-saver on slow or metered ones.
+const NET=navigator.connection||{}; const HD=!(NET.saveData||(NET.effectiveType&&NET.effectiveType!=='4g')||(NET.downlink&&NET.downlink<5));
+const CLIP=w=>window.MEDIA_GET?U(w+'.mp4'):`web/${HD?'hd':'sd'}/${w}.mp4`;
 const PHONE='082 550 8119', WA='https://wa.me/27825508119';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -540,7 +543,7 @@ function settle(){
   $('#backdrop').style.backgroundImage=`url(${U(s.id+'-blur.jpg')})`;
   renderMarkers(); renderNav(); renderDock(); renderFound();
   stage.classList.add('show'); busy=false; stage.scrollTop=0; document.scrollingElement.scrollTop=0;
-  if(s.walk){ vid.src=U(s.walk+'.mp4'); vid.load(); }
+  if(s.walk){ vid.src=CLIP(s.walk); vid.load(); }
   if(cur+1<STOPS.length){ const p=new Image(); p.src=img(STOPS[cur+1].id); }
 }
 function showStill(i,cb){
