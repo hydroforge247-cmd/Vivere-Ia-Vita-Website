@@ -452,14 +452,14 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
 #seal svg{width:100%;height:100%;filter:drop-shadow(0 8px 14px rgba(60,0,0,.55))}
 #seal .half{position:absolute;inset:0;transition:transform 1.25s cubic-bezier(.22,.8,.3,1),opacity 1.1s ease .15s}
 #seal.press{animation:none;transform:scale(.92);transition:transform .16s ease}
-#seal .crack{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .18s;pointer-events:none}
-#seal.cracking .crack{opacity:1}
+#seal svg.crack{position:absolute;inset:0;width:100%;height:100%;filter:none;display:none;pointer-events:none}
+#seal.cracking svg.crack{display:block}
 #seal .half.a{clip-path:polygon(0 0,58% 0,44% 38%,56% 62%,40% 100%,0 100%)}
 #seal .half.b{clip-path:polygon(58% 0,100% 0,100% 100%,40% 100%,56% 62%,44% 38%)}
 #seal.broken{animation:none;pointer-events:none}
 #seal.broken .half.a{transform:translate(-46px,26px) rotate(-22deg) scale(.92);opacity:0}
 #seal.broken .half.b{transform:translate(46px,30px) rotate(24deg) scale(.92);opacity:0}
-#seal.broken .crack{opacity:0;transition:opacity .5s}
+#seal.broken svg.crack{display:none}
 #tapseal{position:absolute;left:50%;top:50%;margin-top:92px;transform:translateX(-50%);z-index:3;color:#f6e4c4;font-size:13px;font-weight:700;letter-spacing:.08em;white-space:nowrap;text-shadow:0 2px 10px rgba(0,0,0,.8);transition:opacity .4s}
 #gift.unroll #tapseal{opacity:0}
 #gift.three{background:#0b0806}
@@ -516,7 +516,7 @@ label.f{display:grid;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted)
    <div class="hintdown" id="scrollHint">Blaai af ↓</div>
   </div></div>
   <div class="rod"></div>
-  <button id="seal" aria-label="Break the seal"><svg class="crack" viewBox="0 0 132 132" aria-hidden="true"><path d="M76 4 L58 50 L74 82 L52 128" fill="none" stroke="#ffe7b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px #ffcf7a)"/></svg><span class="half a"><svg viewBox="0 0 132 132"><defs><radialGradient id="wx" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#d23b33"/><stop offset=".55" stop-color="#9c1c1a"/><stop offset="1" stop-color="#5e0b0c"/></radialGradient>
+  <button id="seal" aria-label="Break the seal"><svg class="crack" viewBox="0 0 132 132" aria-hidden="true"><path d="M76 4 L58 50 L74 82 L52 128" fill="none" stroke="rgba(255,207,122,.35)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M76 4 L58 50 L74 82 L52 128" fill="none" stroke="#ffe7b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="half a"><svg viewBox="0 0 132 132"><defs><radialGradient id="wx" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#d23b33"/><stop offset=".55" stop-color="#9c1c1a"/><stop offset="1" stop-color="#5e0b0c"/></radialGradient>
    <path id="arcT" d="M20 70 A46 46 0 0 1 112 70"/><path id="arcB" d="M24 66 A42 42 0 0 0 108 66"/></defs>
    <path d="M66 4 C80 2 92 10 102 12 C114 16 118 28 124 38 C130 50 128 62 129 72 C130 86 122 96 116 106 C108 118 96 122 84 127 C72 131 60 129 48 126 C34 122 24 114 16 104 C8 94 4 82 3 68 C2 54 8 42 14 32 C22 20 32 12 44 8 C52 5 58 5 66 4Z" fill="url(#wx)"/>
    <circle cx="66" cy="66" r="46" fill="none" stroke="rgba(255,190,170,.35)" stroke-width="2"/><circle cx="66" cy="66" r="50" fill="none" stroke="rgba(60,0,0,.35)" stroke-width="3"/>
@@ -1566,32 +1566,37 @@ still.src=img(STOPS[0].id); settle(); updateStart(); preloadAll();
       rg.addColorStop(0,`rgba(${col},1)`); rg.addColorStop(.35,`rgba(${col},.85)`); rg.addColorStop(1,`rgba(${col},0)`); q.fillStyle=rg; q.fillRect(0,0,32,32); return s; };
     const PAL=[[245,232,201],[217,191,138],[196,141,82],[150,100,52],[112,72,36],[246,210,141]].map(p=>p.join(','));
     const SPR=PAL.map(sprite), GOLD=sprite('255,226,160'), WHITE=sprite('255,248,232');
-    const data=g.getImageData(0,0,c.width,c.height).data, P=[], STEP=2.3;
+    const data=g.getImageData(0,0,c.width,c.height).data, P=[], STEP=4.2, rowL={}, rowR={};
     for(let y=0;y<h;y+=STEP) for(let x=0;x<w;x+=STEP){ const i=((y*k|0)*c.width+(x*k|0))*4; if(data[i+3]<40) continue;
-      let best=0,bd=1e9; PAL.forEach((p,pi)=>{ const [R,G,B]=p.split(',').map(Number), d=(R-data[i])**2+(G-data[i+1])**2+(B-data[i+2])**2; if(d<bd){bd=d;best=pi;} });
+      const ry=Math.round(y/4)*4; rowL[ry]=Math.min(rowL[ry]??1e9,x); rowR[ry]=Math.max(rowR[ry]??-1,x);
+      const best=[0,1,5][Math.random()*3|0];   // cream, parchment or gold — never the dark wood browns
       const delay=((x/w)+.15+wave(y))/1.3*SWEEP;
-      P.push({x:X0+x,y:Y0+y,s:SPR[best],d:delay+Math.random()*.08,a:-1.15+(Math.random()-.5)*1.4,sp:.35+Math.random()*.9,turn:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8),sz:2.6+Math.random()*2.6,life:1.4+Math.random()*.9}); }
+      P.push({x:X0+x,y:Y0+y,s:SPR[best],d:delay+Math.random()*.12,a:-1.4+(Math.random()-.5)*2.2,sp:.25+Math.random()*1.1,turn:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8),sz:4+Math.random()*5,life:1.4+Math.random()*.9}); }
     el.style.visibility='hidden';
     const layer=document.createElement('canvas'); layer.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6';
     gift.appendChild(layer); layer.width=innerWidth*k; layer.height=innerHeight*k; const lc=layer.getContext('2d'); lc.setTransform(k,0,0,k,0,0);
+    const buf=document.createElement('canvas'); buf.width=c.width; buf.height=c.height; const bc=buf.getContext('2d'); bc.scale(k,k);
     const T0=performance.now();
     (function tick(now){ const t=(now-T0)/1000; lc.clearRect(0,0,innerWidth,innerHeight);
       // what's left of the scroll, clipped by the soft curved edge
-      lc.save(); lc.beginPath(); lc.moveTo(X0+w+40,Y0-20);
-      for(let y=-20;y<=h+20;y+=4) lc.lineTo(X0+Math.max(-40,front(y,t)),Y0+y);
-      lc.lineTo(X0+w+40,Y0+h+20); lc.closePath(); lc.clip(); lc.drawImage(c,X0,Y0,w,h); lc.restore();
+      // remaining scroll, with a soft feathered edge (blurred eraser) instead of a hard cut
+      bc.globalCompositeOperation='copy'; bc.drawImage(c,0,0,w,h); bc.globalCompositeOperation='destination-out';
+      bc.save(); bc.shadowColor='#000'; bc.shadowBlur=14; bc.shadowOffsetX=5000*k; bc.shadowBlur=14*k; bc.beginPath(); bc.moveTo(-5000-40,-20);
+      for(let y=-20;y<=h+20;y+=4) bc.lineTo(-5000+Math.max(-40,front(y,t)),y); bc.lineTo(-5000-40,h+20); bc.closePath(); bc.fill(); bc.restore();
+      lc.drawImage(buf,X0,Y0,w,h);
       // the glowing edge
       if(t<SWEEP+.2){ lc.save(); lc.globalCompositeOperation='lighter'; lc.lineWidth=3; lc.strokeStyle='rgba(255,214,140,.55)'; lc.shadowColor='#ffd38a'; lc.shadowBlur=14;
-        lc.beginPath(); let first=true; for(let y=0;y<=h;y+=4){ const fx=front(y,t); if(fx<0||fx>w) { first=true; continue; } first?lc.moveTo(X0+fx,Y0+y):lc.lineTo(X0+fx,Y0+y); first=false; } lc.stroke(); lc.restore(); }
+        let prev=null; for(let y=0;y<=h;y+=4){ const fx=front(y,t), ok=rowL[y]!==undefined && fx>=rowL[y] && fx<=rowR[y];
+          if(ok&&prev){ lc.beginPath(); lc.moveTo(X0+prev[0],Y0+prev[1]); lc.lineTo(X0+fx,Y0+y); lc.stroke(); } prev=ok?[fx,y]:null; } lc.restore(); }
       // the dust, curling away in soft spirals
-      let alive=0; lc.globalCompositeOperation='source-over';
+      let alive=0; lc.globalCompositeOperation='lighter';
       for(const p of P){ const age=t-p.d; if(age<=0){ alive++; continue; } if(age>p.life) continue; alive++;
         const f=age/p.life, e=1-(1-f)*(1-f);
         p.a+=p.turn*.016*(1-f); const v=p.sp*(1+age*1.6);
         p.x+=Math.cos(p.a)*v+.35; p.y+=Math.sin(p.a)*v-.25;
-        const sz=p.sz*(1-e*.55), al=Math.pow(1-f,1.6);
-        lc.globalAlpha=al; lc.drawImage(age<.28?p.s:(age<.6?GOLD:WHITE),p.x-sz,p.y-sz,sz*2,sz*2); }
-      lc.globalAlpha=1;
+        const sz=p.sz*(1-e*.4), al=.34*Math.pow(1-f,1.4)*Math.min(1,age*5);
+        lc.globalAlpha=al; lc.drawImage(age<.25?p.s:(age<.7?GOLD:WHITE),p.x-sz,p.y-sz,sz*2,sz*2); }
+      lc.globalAlpha=1; lc.globalCompositeOperation='source-over';
       if(alive && t<SWEEP+3) requestAnimationFrame(tick); else { layer.remove(); onDone&&onDone(); } })(T0);
   }
   $g('openPresent').onclick=()=>{
